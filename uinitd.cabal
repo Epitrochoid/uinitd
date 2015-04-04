@@ -20,7 +20,7 @@ executable uinitd
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8,
-                       daemons >=0.2,
+                       hdaemonize,
                        shelly,
                        data-default,
                        text >=1.2,

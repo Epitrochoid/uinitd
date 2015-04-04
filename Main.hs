@@ -1,7 +1,7 @@
-{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings, FlexibleContexts, RecordWildCards #-}
 
 import Prelude hiding (FilePath)
-import System.Posix.Daemonize hiding (name)
+import System.Posix.Daemonize
 import Shelly
 import qualified Data.Text as T
 import Data.Default
@@ -9,7 +9,7 @@ import qualified Data.ConfigFile as C
 import Data.Either.Utils
 import Control.Monad.Error
 
-data Service = Service { name :: T.Text
+data Service = Service { sname :: T.Text
                        , exec :: FilePath
                        } deriving Show
 
@@ -18,9 +18,18 @@ buildServices cp = fmap (buildService cp)
 
 buildService :: MonadError C.CPError m => C.ConfigParser -> C.SectionSpec -> m Service
 buildService cp section = do
-        name <- C.get cp section "name"
+        sname <- C.get cp section "name"
         exec <- C.get cp section "exec"
-        return $ Service {name=name, exec=fromText exec}
+        return $ Service {sname=sname, exec=fromText exec}
+
+serviceToDaemon :: Service -> CreateDaemon ()
+serviceToDaemon Service{..} = CreateDaemon { privilegedAction = return ()
+                                           , program = return $ shelly $ run_ exec []
+                                           , name = Just $ T.unpack sname
+                                           , user = Nothing
+                                           , group = Nothing
+                                           , syslogOptions = []
+                                           , pidfileDirectory = Nothing}
 
 main = shelly $ do
     val <- liftIO $ C.readfile C.emptyCP "test.cfg"

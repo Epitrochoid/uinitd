@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 import Prelude hiding (FilePath)
 import System.Posix.Daemon
@@ -14,11 +14,12 @@ data Service = Service { name :: T.Text
                        , stop :: FilePath
                        } deriving Show
 
--- buildServices :: [C.SectionSpec] -> C.ConfigParser -> [Either Service]
+buildServices :: MonadError C.CPError m => C.ConfigParser -> [C.SectionSpec] -> [m Service]
+buildServices cp = fmap (buildService cp)
 
 
-buildService :: MonadError C.CPError m => C.SectionSpec -> C.ConfigParser -> m Service
-buildService section cp = do
+buildService :: MonadError C.CPError m => C.ConfigParser -> C.SectionSpec -> m Service
+buildService cp section = do
         name <- C.get cp section "name"
         start <- C.get cp section "start"
         stop <- C.get cp section "stop" 
@@ -27,6 +28,7 @@ buildService section cp = do
 main = shelly $ do
     val <- liftIO $ C.readfile C.emptyCP "test.cfg"
     let cp = forceEither val
+    let secs = C.sections cp
+    let servs = map (show . forceEither) (buildServices cp secs)
 
-    let a = buildService "section1" cp
-    echo $ T.pack $ show $ forceEither a
+    echo $ T.pack $ show servs

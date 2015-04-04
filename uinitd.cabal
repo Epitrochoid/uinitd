@@ -23,6 +23,9 @@ executable uinitd
                        daemons >=0.2,
                        shelly,
                        data-default,
-                       text >=1.2
+                       text >=1.2,
+                       ConfigFile,
+                       MissingH,
+                       mtl
   -- hs-source-dirs:      
   default-language:    Haskell2010

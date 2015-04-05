@@ -27,6 +27,9 @@ runService Service{..} = runDetached (Just $ nameToPID name) DevNull program
     where
         program = shelly $ run_ exec []
 
+runServices :: [Service] -> IO ()
+runServices = mapM_ runService
+
 killService :: Service -> IO ()
 killService Service{..} = kill $ nameToPID name
 

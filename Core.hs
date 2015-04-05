@@ -4,9 +4,7 @@ module Core where
 import Prelude hiding (FilePath)
 import Shelly
 import qualified Data.Text as T
-import Data.Default
 import qualified Data.ConfigFile as C
-import Data.Either.Utils
 import Control.Monad.Error
 import System.Posix.Daemon
 import qualified System.IO as S

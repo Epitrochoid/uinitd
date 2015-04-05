@@ -4,16 +4,23 @@ import Prelude hiding (init)
 import Core hiding (name, exec)
 import System.Console.CmdArgs
 import System.Environment (getArgs, withArgs)
+import qualified System.IO as S
+import Data.Either.Utils
+import Data.ConfigFile
 
 data Options = Init
+             | TestMode
                deriving (Show, Data, Typeable, Eq)
 
 init :: Options
 init = Init &= details ["Starts all enabled services."]
 
+testMode :: Options
+testMode = TestMode &= details ["test"]
+
 
 prgModes :: Mode (CmdArgs Options)
-prgModes = cmdArgsMode $ modes [init]
+prgModes = cmdArgsMode $ modes [init, testMode]
     &= verbosityArgs [explicit, name "Verbose", name "V"] []
     &= versionArg [explicit, name "version", name "v", summary _PROGRAM_INFO]
     &= summary (_PROGRAM_INFO)
@@ -34,7 +41,16 @@ main = do
 
 optionHandler :: Options -> IO ()
 optionHandler Init = exec Init
+optionHandler TestMode = exec TestMode
 
 exec :: Options -> IO()
-exec Init = putStrLn "works"
+exec Init = initHandler "test.cfg"
+exec TestMode = putStrLn "test"
 
+initHandler :: S.FilePath -> IO ()
+initHandler confFile = do
+        config <- readfile emptyCP confFile
+        let cp = forceEither config            -- To be replaced with proper error handling
+            secs = sections cp
+            servs = map forceEither (buildServices cp secs)
+        runServices servs

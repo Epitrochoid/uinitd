@@ -54,7 +54,7 @@ initHandler confFile = do
         case config of
             (Left (SomeException _)) -> putStrLn $ "Config file " ++ confFile ++ " not found."
             (Right conf) -> case conf of
-                                (Left _) -> putStrLn $ "Parse error in " ++ confFile
-                                (Right cp) -> let secs = sections cp
-                                                  servs = map forceEither (buildServices cp secs)
-                                              in runServices servs
+                (Left e) -> putStrLn $ "Parse error in " ++ confFile ++ ": " ++ (show e)
+                (Right cp) -> let secs = sections cp
+                                  servs = map forceEither (buildServices cp secs)
+                              in runServices servs

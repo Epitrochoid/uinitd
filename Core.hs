@@ -6,6 +6,7 @@ import Shelly
 import qualified Data.Text as T
 import qualified Data.ConfigFile as C
 import Control.Monad.Error
+import Control.Exception
 import System.Posix.Daemon
 import qualified System.IO as S
 
@@ -35,3 +36,12 @@ killService Service{..} = kill $ nameToPID name
 
 nameToPID :: T.Text -> S.FilePath
 nameToPID name = T.unpack $ name `T.append` ".pid"
+
+openServicesFile :: MonadError C.CPError m => S.FilePath -> IO (m C.ConfigParser)
+openServicesFile path = do
+        conf <- try $ C.readfile C.emptyCP path
+        case conf of
+            (Left (SomeException _)) -> return $ throwError (C.OtherProblem errorstring, "")
+            (Right cp) -> return cp
+    where
+        errorstring = "Could not open config file: " ++ path

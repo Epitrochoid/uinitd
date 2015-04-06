@@ -8,6 +8,7 @@ import qualified System.IO as S
 import Data.Either.Utils
 import Data.ConfigFile
 import Control.Exception
+import qualified Data.Text as T
 
 data Options = Init
              | TestMode
@@ -50,11 +51,10 @@ exec TestMode = putStrLn "test"
 
 initHandler :: S.FilePath -> IO ()
 initHandler confFile = do
-        config <- try $ readfile emptyCP confFile
+        config <- openServicesFile confFile
         case config of
-            (Left (SomeException _)) -> putStrLn $ "Config file " ++ confFile ++ " not found."
-            (Right conf) -> case conf of
-                (Left e) -> putStrLn $ "Parse error in " ++ confFile ++ ": " ++ (show e)
-                (Right cp) -> let secs = sections cp
-                                  servs = map forceEither (buildServices cp secs)
-                              in runServices servs
+            (Left e) -> putStrLn (show e)
+            (Right cp) -> let secs = sections cp
+                              servs = map forceEither (buildServices cp secs)
+                          in runServices servs
+

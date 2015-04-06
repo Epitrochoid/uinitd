@@ -56,7 +56,6 @@ initHandler confFile = do
             (Left (ParseError s, _)) -> putStrLn $ "Parse error in " ++ confFile ++ ": " ++ s
             (Left (OtherProblem s, _)) -> putStrLn $ "Init error: " ++ s
             (Left e) -> putStrLn $ "Unexpected error in init:\n" ++ (show e)
-            (Right cp) -> let secs = sections cp
-                              servs = map forceEither (buildServices cp secs)
+            (Right cp) -> let (errors, servs) = services cp
                           in runServices servs
 

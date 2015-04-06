@@ -5,6 +5,7 @@ import Prelude hiding (FilePath)
 import Shelly
 import qualified Data.Text as T
 import qualified Data.ConfigFile as C
+import Data.Either
 import Control.Monad.Error
 import Control.Exception
 import System.Posix.Daemon
@@ -45,3 +46,10 @@ openServicesFile path = do
             (Right cp) -> return cp
     where
         errorstring = "Could not open config file: " ++ path
+
+services :: C.ConfigParser -> ([C.CPError], [Service])
+services cp = (lefts servs, rights servs)
+    where
+        secs = C.sections cp
+        servs = buildServices cp secs
+

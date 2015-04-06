@@ -53,7 +53,9 @@ initHandler :: S.FilePath -> IO ()
 initHandler confFile = do
         config <- openServicesFile confFile
         case config of
-            (Left e) -> putStrLn (show e)
+            (Left (ParseError s, _)) -> putStrLn $ "Parse error in " ++ confFile ++ ": " ++ s
+            (Left (OtherProblem s, _)) -> putStrLn $ "Init error: " ++ s
+            (Left e) -> putStrLn $ "Unexpected error in init:\n" ++ (show e)
             (Right cp) -> let secs = sections cp
                               servs = map forceEither (buildServices cp secs)
                           in runServices servs

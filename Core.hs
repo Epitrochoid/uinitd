@@ -53,3 +53,20 @@ services cp = (lefts servs, rights servs)
         secs = C.sections cp
         servs = buildServices cp secs
 
+data Configuration = Configuration { serviceDir :: S.FilePath
+                                   , execDir :: S.FilePath
+                                   , serviceList :: S.FilePath
+                                   , logFile :: S.FilePath
+                                   } deriving Show
+
+loadConfig :: MonadError C.CPError m => C.ConfigParser -> m Configuration
+loadConfig cp = do
+        serviceDir <- C.get cp "" "services"
+        execDir <- C.get cp "" "executables"
+        serviceList <- C.get cp "" "enabled"
+        logFile <- C.get cp "" "logfile"
+        return $ Configuration { serviceDir=serviceDir
+                               , execDir=execDir
+                               , serviceList=serviceList
+                               , logFile=logFile}
+

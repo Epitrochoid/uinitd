@@ -48,12 +48,6 @@ openServicesFile path = do
     where
         errorstring = "Could not open config file: " ++ path
 
-services' :: C.ConfigParser -> ([C.CPError], [Service])
-services' cp = (lefts servs, rights servs)
-    where
-        secs = C.sections cp
-        servs = buildServices cp secs
-
 services :: C.ConfigParser -> Writer String [Service]
 services cp = do
         let secs = C.sections cp

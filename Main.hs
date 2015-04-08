@@ -9,6 +9,7 @@ import Data.Either.Utils
 import Data.ConfigFile
 import Control.Exception
 import qualified Data.Text as T
+import Control.Monad.Writer (runWriter)
 
 data Options = Init
              | TestMode
@@ -56,6 +57,6 @@ initHandler confFile = do
             (Left (ParseError s, _)) -> putStrLn $ "Parse error in " ++ confFile ++ ": " ++ s
             (Left (OtherProblem s, _)) -> putStrLn $ "Init error: " ++ s
             (Left e) -> putStrLn $ "Unexpected error in init:\n" ++ (show e)
-            (Right cp) -> let (errors, servs) = services cp
-                          in runServices servs
+            (Right cp) -> let (servs, errors) = runWriter $ services cp
+                          in runServices servs >> putStrLn errors
 

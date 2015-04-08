@@ -11,7 +11,7 @@ import Control.Exception
 import qualified Data.Text as T
 import Control.Monad.Writer (runWriter)
 import Shelly hiding (readfile)
-import Control.Monad (when)
+import Control.Monad (when, liftM)
 
 data Options = Init { config :: S.FilePath
                     }
@@ -49,7 +49,12 @@ main = do
 
 optionHandler :: Options -> IO ()
 optionHandler Init{..} = do
-        let opts = if (null config) then Init {config="uinitd.cfg"} else Init {config=config}
+        check <- shelly $ test_f "~/.config/uinitd.conf"
+        let opts = case (null config) of
+                       False -> Init {config=config}
+                       True -> case check of
+                                   True -> Init {config="~/.config/uinitd.conf"}
+                                   False -> Init {config="/etc/uinitd.conf"}
         exec opts
 optionHandler TestMode = exec TestMode
 

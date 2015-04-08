@@ -49,23 +49,9 @@ main = do
 
 optionHandler :: Options -> IO ()
 optionHandler Init{..} = do
-        check <- shelly $ test_f "~/.config/uinitd.conf"
-        let opts = case (null config) of
-                       False -> Init {config=config}
-                       True -> case check of
-                                   True -> Init {config="~/.config/uinitd.conf"}
-                                   False -> Init {config="/etc/uinitd.conf"}
-        exec opts
-optionHandler TestMode = exec TestMode
-
-exec :: Options -> IO ()
-exec Init{..} = do
-        cp <- readfile emptyCP config
-        let conf = loadConfig $ forceEither cp
-        case conf of
-            (Left e) -> error $ errorToString e
-            (Right c) -> initHandler c
-exec TestMode = putStrLn "test"
+        conf <- configurationLoader config
+        initHandler conf
+optionHandler TestMode = putStrLn "test"
 
 initHandler :: Configuration -> IO ()
 initHandler Configuration{..} = do
@@ -75,4 +61,18 @@ initHandler Configuration{..} = do
             (Right cp) -> let (servs, errors) = runWriter $ services cp
                           in runServices pidPath servs >> (shelly $ appendfile logFile (T.pack errors))
 
-
+configurationLoader :: S.FilePath -> IO Configuration
+configurationLoader conf = do
+        check <- shelly $ test_f "~/.config/uinitd.conf"
+        let file = case (null conf) of
+                       False -> conf
+                       True -> case check of
+                                   True -> "~/.config/uinitd.conf"
+                                   False -> "/etc/uinitd.conf"
+        cp <- readfile emptyCP file
+        -- Use of forceEither here is fine since failure on init would exit
+        -- anyways
+        let configuration = loadConfig $ forceEither cp
+        case configuration of
+            (Left e) -> error $ errorToString e
+            (Right c) -> return c

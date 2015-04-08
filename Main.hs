@@ -73,6 +73,6 @@ initHandler Configuration{..} = do
         case servList of
             (Left e) -> putStrLn $ errorToString e
             (Right cp) -> let (servs, errors) = runWriter $ services cp
-                          in runServices servs >> (shelly $ appendfile logFile (T.pack errors))
+                          in runServices pidPath servs >> (shelly $ appendfile logFile (T.pack errors))
 
 

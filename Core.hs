@@ -25,19 +25,19 @@ buildService cp section = do
         exec <- C.get cp section "exec"
         return $ Service {name=name, exec=fromText exec}
 
-runService :: Service -> IO ()
-runService Service{..} = runDetached (Just $ nameToPID name) DevNull program
+runService :: S.FilePath -> Service -> IO ()
+runService path Service{..} = runDetached (Just $ nameToPID path name) DevNull program
     where
         program = shelly $ run_ exec []
 
-runServices :: [Service] -> IO ()
-runServices = mapM_ runService
+runServices :: S.FilePath -> [Service] -> IO ()
+runServices pidpath  = mapM_ (runService pidpath)
 
-killService :: Service -> IO ()
-killService Service{..} = kill $ nameToPID name
+killService :: S.FilePath -> Service -> IO ()
+killService pidpath Service{..} = kill $ nameToPID pidpath name
 
-nameToPID :: T.Text -> S.FilePath
-nameToPID name = T.unpack $ name `T.append` ".pid"
+nameToPID :: S.FilePath -> T.Text -> S.FilePath
+nameToPID path name = (++) path $ T.unpack $ name `T.append` ".pid"
 
 openServicesFile :: MonadError C.CPError m => S.FilePath -> IO (m C.ConfigParser)
 openServicesFile path = do
@@ -69,6 +69,7 @@ data Configuration = Configuration { serviceDir :: S.FilePath
                                    , execDir :: S.FilePath
                                    , serviceList :: S.FilePath
                                    , logFile :: FilePath
+                                   , pidPath :: S.FilePath
                                    } deriving Show
 
 loadConfig :: MonadError C.CPError m => C.ConfigParser -> m Configuration
@@ -77,8 +78,10 @@ loadConfig cp = do
         execDir <- C.get cp "" "executables"
         serviceList <- C.get cp "" "enabled"
         logFile <- C.get cp "" "logfile"
+        pidPath <- C.get cp "" "pids"
         return $ Configuration { serviceDir=serviceDir
                                , execDir=execDir
                                , serviceList=serviceList
-                               , logFile=fromText $ T.pack logFile}
+                               , logFile=fromText $ T.pack logFile
+                               , pidPath=pidPath}
 

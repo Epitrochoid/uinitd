@@ -43,10 +43,10 @@ openServicesFile :: MonadError C.CPError m => S.FilePath -> IO (m C.ConfigParser
 openServicesFile path = do
         conf <- try $ C.readfile C.emptyCP path
         case conf of
-            (Left (SomeException _)) -> return $ throwError (C.OtherProblem errorstring, "")
+            (Left (SomeException e)) -> return $ throwError (C.OtherProblem $ errorstring e, "openServicesFile")
             (Right cp) -> return cp
     where
-        errorstring = "Could not open config file: " ++ path
+        errorstring e = "Could not open config file: " ++ path ++ "\n" ++ (show e)
 
 services :: C.ConfigParser -> Writer String [Service]
 services cp = do
@@ -62,7 +62,7 @@ errorToString (C.ParseError s, loc) = "Parse error :\n" ++ s ++ "\n in location 
 errorToString (C.SectionAlreadyExists s, loc) = "Repeated section `" ++ s ++ "` in: " ++ loc ++ "\n"
 errorToString (C.NoSection s, loc) = "No section `" ++ s ++ "` in: " ++ loc ++ "\n"
 errorToString (C.NoOption s, loc) = "No option `" ++ s ++ "` in: " ++ loc ++ "\n"
-errorToString (C.OtherProblem s, loc) = "Unexpected error:\n" ++ s ++ "in: " ++ loc ++ "\n"
+errorToString (C.OtherProblem s, loc) = "Unexpected error:\n" ++ s ++ "\nin: " ++ loc ++ "\n"
 errorToString _ = "Uncaught fault\n"
 
 data Configuration = Configuration { serviceDir :: S.FilePath
@@ -80,6 +80,5 @@ loadConfig cp = do
         return $ Configuration { serviceDir=serviceDir
                                , execDir=execDir
                                , serviceList=serviceList
-                               , logFile=fromText logFile}
-
+                               , logFile=fromText $ T.pack logFile}
 

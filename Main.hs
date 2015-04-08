@@ -10,13 +10,18 @@ import Data.ConfigFile
 import Control.Exception
 import qualified Data.Text as T
 import Control.Monad.Writer (runWriter)
+import Shelly hiding (readfile)
+import Control.Monad (when)
 
-data Options = Init
+data Options = Init { config :: S.FilePath
+                    }
              | TestMode
                deriving (Show, Data, Typeable, Eq)
 
 init :: Options
-init = Init &= details ["Starts all enabled services."]
+init = Init {config = def &= help "uinitd configuration file"
+            }
+            &= details ["Starts all enabled services."]
 
 testMode :: Options
 testMode = TestMode &= details ["test"]
@@ -43,20 +48,26 @@ main = do
     optionHandler opts
 
 optionHandler :: Options -> IO ()
-optionHandler Init = exec Init
+optionHandler Init{..} = do
+        let opts = if (null config) then Init {config="uinitd.cfg"} else Init {config=config}
+        exec opts
 optionHandler TestMode = exec TestMode
 
-exec :: Options -> IO()
-exec Init = initHandler "test.cfg"
+exec :: Options -> IO ()
+exec Init{..} = do
+        cp <- readfile emptyCP config
+        let conf = loadConfig $ forceEither cp
+        case conf of
+            (Left e) -> error $ errorToString e
+            (Right c) -> initHandler c
 exec TestMode = putStrLn "test"
 
-initHandler :: S.FilePath -> IO ()
-initHandler confFile = do
-        config <- openServicesFile confFile
-        case config of
-            (Left (ParseError s, _)) -> putStrLn $ "Parse error in " ++ confFile ++ ": " ++ s
-            (Left (OtherProblem s, _)) -> putStrLn $ "Init error: " ++ s
-            (Left e) -> putStrLn $ "Unexpected error in init:\n" ++ (show e)
+initHandler :: Configuration -> IO ()
+initHandler Configuration{..} = do
+        servList <- openServicesFile serviceList
+        case servList of
+            (Left e) -> putStrLn $ errorToString e
             (Right cp) -> let (servs, errors) = runWriter $ services cp
-                          in runServices servs >> putStrLn errors
+                          in runServices servs >> (shelly $ appendfile logFile (T.pack errors))
+
 

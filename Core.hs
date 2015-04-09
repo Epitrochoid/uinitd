@@ -57,6 +57,14 @@ services cp = do
         mapM_ (tell . errorToString) fails
         return servs
 
+containsService :: T.Text -> [Service] -> Bool
+containsService serv servs = serv `elem` (fmap name servs)
+
+getService :: T.Text -> [Service] -> Maybe Service
+getService serv servs = case containsService serv servs of
+                            False -> Nothing
+                            True -> Just $ head $ filter (\a -> name a == serv) servs
+
 errorToString :: C.CPError -> String
 errorToString (C.ParseError s, loc) = "Parse error :\n" ++ s ++ "\n in location " ++ loc ++ "\n"
 errorToString (C.SectionAlreadyExists s, loc) = "Repeated section `" ++ s ++ "` in: " ++ loc ++ "\n"

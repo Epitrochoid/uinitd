@@ -68,17 +68,19 @@ initHandler Configuration{..} = do
             False -> runServices pidPath servs
 
 startHandler :: Configuration -> String -> IO ()
-startHandler Configuration{..} serviceName = do
+startHandler conf serviceName = doToService runService conf serviceName
+
+doToService :: (S.FilePath -> Service -> IO ()) -> Configuration -> String -> IO ()
+doToService func Configuration{..} serviceName = do
         (servs, errors) <- serviceLoader serviceList
         (servsd, errorsd) <- serviceLoader $ serviceDir ++ serviceName ++ ".service"
-        let serv = getService (T.pack serviceName) servs
-        let servd = getService (T.pack serviceName) servsd
+        let serv = getService (T.pack serviceName) servs -- from serviceList
+        let servd = getService (T.pack serviceName) servsd -- from serviceDir
         case serv of
-            (Just s) -> runService pidPath s
+            (Just s) -> func pidPath s
             Nothing -> case servd of
-                           (Just s) -> runService pidPath s
+                           (Just s) -> func pidPath s
                            Nothing -> putStrLn $ "No service `" ++ serviceName ++ "` found."
-
 
 configurationLoader :: S.FilePath -> IO Configuration
 configurationLoader conf = do

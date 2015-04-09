@@ -18,6 +18,9 @@ data Options = Init { config :: S.FilePath
              | Start { config :: S.FilePath
                      , sname :: String
                      }
+             | Stop { config :: S.FilePath
+                    , sname :: String
+                    }
                deriving (Show, Data, Typeable, Eq)
 
 init :: Options
@@ -31,8 +34,14 @@ start = Start { config = def &= help "uinitd configuration file"
               }
               &= details ["Start a service."]
 
+stop :: Options
+stop = Stop { config = def &= help "uinitd configuration file"
+            , sname = def &= help "name of service"
+            }
+            &= details ["Stop a service."]
+
 prgModes :: Mode (CmdArgs Options)
-prgModes = cmdArgsMode $ modes [init, start]
+prgModes = cmdArgsMode $ modes [init, start, stop]
     &= verbosityArgs [explicit, name "Verbose", name "V"] []
     &= versionArg [explicit, name "version", name "v", summary _PROGRAM_INFO]
     &= summary (_PROGRAM_INFO)
@@ -58,6 +67,9 @@ optionHandler Init{..} = do
 optionHandler Start{..} = do
         conf <- configurationLoader config
         startHandler conf sname
+optionHandler Stop{..} = do
+        conf <- configurationLoader config
+        stopHandler conf sname
 
 initHandler :: Configuration -> IO ()
 initHandler Configuration{..} = do
@@ -68,7 +80,10 @@ initHandler Configuration{..} = do
             False -> runServices pidPath servs
 
 startHandler :: Configuration -> String -> IO ()
-startHandler conf serviceName = doToService runService conf serviceName
+startHandler = doToService runService
+
+stopHandler :: Configuration -> String -> IO ()
+stopHandler = doToService killService
 
 doToService :: (S.FilePath -> Service -> IO ()) -> Configuration -> String -> IO ()
 doToService func Configuration{..} serviceName = do

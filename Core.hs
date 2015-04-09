@@ -10,10 +10,11 @@ import Control.Monad.Error
 import Control.Monad.Writer
 import Control.Exception
 import System.Posix.Daemon
+import System.Cmd
 import qualified System.IO as S
 
 data Service = Service { name :: T.Text
-                       , exec :: FilePath
+                       , exec :: S.FilePath
                        } deriving Show
 
 buildServices :: MonadError C.CPError m => C.ConfigParser -> [C.SectionSpec] -> [m Service]
@@ -23,12 +24,12 @@ buildService :: MonadError C.CPError m => C.ConfigParser -> C.SectionSpec -> m S
 buildService cp section = do
         name <- C.get cp section "name"
         exec <- C.get cp section "exec"
-        return $ Service {name=name, exec=fromText exec}
+        return $ Service {name=name, exec=exec}
 
 runService :: S.FilePath -> Service -> IO ()
 runService path Service{..} = runDetached (Just $ nameToPID path name) DevNull program
     where
-        program = shelly $ run_ exec []
+        program = system exec >> (return ())
 
 runServices :: S.FilePath -> [Service] -> IO ()
 runServices pidpath  = mapM_ (runService pidpath)

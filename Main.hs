@@ -57,8 +57,7 @@ optionHandler Init{..} = do
         initHandler conf
 optionHandler Start{..} = do
         conf <- configurationLoader config
-        -- startHandler conf sname
-        putStrLn "placeholder"
+        startHandler conf sname
 
 initHandler :: Configuration -> IO ()
 initHandler Configuration{..} = do
@@ -67,6 +66,19 @@ initHandler Configuration{..} = do
         case null servs of
             True -> putStrLn $ "No services loaded.\n" ++ errors
             False -> runServices pidPath servs
+
+startHandler :: Configuration -> String -> IO ()
+startHandler Configuration{..} serviceName = do
+        (servs, errors) <- serviceLoader serviceList
+        (servsd, errorsd) <- serviceLoader $ serviceDir ++ serviceName ++ ".service"
+        let serv = getService (T.pack serviceName) servs
+        let servd = getService (T.pack serviceName) servsd
+        case serv of
+            (Just s) -> runService pidPath s
+            Nothing -> case servd of
+                           (Just s) -> runService pidPath s
+                           Nothing -> putStrLn $ "No service `" ++ serviceName ++ "` found."
+
 
 configurationLoader :: S.FilePath -> IO Configuration
 configurationLoader conf = do

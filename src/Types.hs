@@ -16,10 +16,17 @@ data RService = RService {
               pid  :: ProcessHandle  -- ^ ProcessHandle for service
 }
 
-data Configuration = Configuration {
+data Config = Config {
                    serviceDir  :: FilePath,
                    execDir     :: FilePath,
                    serviceList :: FilePath,
                    logFile     :: FilePath,
                    pidDir      :: FilePath
 }
+
+data UinitdState = UinitdState {
+                 availableServices :: [Service],
+                 runningServices   :: [RService]
+}
+
+newtype Uinitd a = Uinitd (ReaderT Config (StateT UinitdState IO) a)

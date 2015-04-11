@@ -1,3 +1,5 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 module Types where
 
 import Prelude hiding (FilePath)
@@ -27,8 +29,9 @@ data Config = Config {
 }
 
 data UinitdState = UinitdState {
-                 availableServices :: [Service],
-                 runningServices   :: [RService]
+                 available :: [Service],
+                 running   :: [RService]
 }
 
 newtype Uinitd a = Uinitd (ReaderT Config (StateT UinitdState IO) a)
+                   deriving (Monad, Applicative, Functor, MonadState UinitdState)

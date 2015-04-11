@@ -21,11 +21,11 @@ data RService = RService {
 }
 
 data Config = Config {
-                   serviceDir  :: FilePath,
-                   execDir     :: FilePath,
-                   serviceList :: FilePath,
-                   logFile     :: FilePath,
-                   pidDir      :: FilePath
+              serviceDir  :: FilePath,
+              execDir     :: FilePath,
+              serviceList :: FilePath,
+              logFile     :: FilePath,
+              pidDir      :: FilePath
 }
 
 data UinitdState = UinitdState {

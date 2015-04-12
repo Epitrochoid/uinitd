@@ -18,7 +18,7 @@ type SName = String
 data Service = Service {
              sname :: SName,  -- ^ Name of service
              exec  :: FilePath -- ^ File to execute
-} deriving Show
+} deriving (Show, Eq)
 
 -- | Type for a running service
 data RService = RService {

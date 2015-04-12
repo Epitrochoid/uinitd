@@ -54,9 +54,9 @@ newtype Uinitd a = Uinitd (ReaderT Config (StateT UinitdState IO) a)
                    deriving (Monad, Applicative, Functor, MonadState UinitdState, MonadIO)
 
 -- | Daemon commands
-data Cmd = Start SName
-         | Stop SName
-         | Restart SName
+data Cmd = CmdStart SName
+         | CmdStop SName
+         | CmdRestart SName
          deriving (Generic, Show)
 
 instance Serialize Cmd

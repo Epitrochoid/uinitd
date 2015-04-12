@@ -7,11 +7,15 @@ import System.Process
 import qualified Data.ConfigFile as C
 import Control.Exception
 import Control.Monad.Except
+import Control.Monad.State
 
-runService :: Service -> IO RService
-runService Service{..} = do
-        handle <- runCommand exec
-        return RService {rname = sname, pid = handle}
+startService :: Service -> Uinitd ()
+startService Service{..} = do
+        pid <- liftIO $ runCommand exec
+        UinitdState{..} <- get
+        let newRServ = RService {rname = sname, pid = pid}
+        put UinitdState {available = available, running = newRServ:running}
+
 
 loadConfig :: MonadError C.CPError m => C.ConfigParser -> m Config
 loadConfig cp = do

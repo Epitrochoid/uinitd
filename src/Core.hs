@@ -28,3 +28,4 @@ addService :: Service -> Uinitd ()
 addService service = do
         UinitdState{..} <- get
         put UinitdState{available = service:available, running = running}
+

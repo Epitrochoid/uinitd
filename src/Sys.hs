@@ -9,12 +9,20 @@ import Control.Exception
 import Control.Monad.Except
 import Control.Monad.State
 
-startService :: Service -> Uinitd ()
+startService :: Service -> Uinitd RService
 startService Service{..} = do
         pid <- liftIO $ runCommand exec
         UinitdState{..} <- get
         let newRServ = RService {rname = sname, pid = pid}
         put UinitdState {available = available, running = newRServ:running}
+        return newRServ
+
+stopService :: RService -> Uinitd ()
+stopService service = do
+        UinitdState{..} <- get
+        liftIO $ terminateProcess $ pid service
+        let removed = filter (\x -> x /= service) running
+        put UinitdState {available = available, running = removed}
 
 
 loadConfig :: MonadError C.CPError m => C.ConfigParser -> m Config

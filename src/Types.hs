@@ -20,6 +20,10 @@ data RService = RService {
               pid   :: ProcessHandle  -- ^ ProcessHandle for service
 }
 
+instance Eq RService where
+        a == b = (rname a) == (rname b)
+        a /= b = not (a == b)
+
 instance Show RService where
         show RService{..} = rname
 

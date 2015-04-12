@@ -5,18 +5,22 @@ module Types where
 import Prelude hiding (FilePath)
 import System.IO (FilePath)
 import System.Process
+import System.Daemon
 import Control.Monad.State
 import Control.Monad.Reader
 
+-- | Name of a service
+type SName = String
+
 -- | Type for a loaded, but not running service
 data Service = Service {
-             sname :: String,  -- ^ Name of service
+             sname :: SName,  -- ^ Name of service
              exec  :: FilePath -- ^ File to execute
 } deriving Show
 
 -- | Type for a running service
 data RService = RService {
-              rname :: String,        -- ^ Name of service
+              rname :: SName,        -- ^ Name of service
               pid   :: ProcessHandle  -- ^ ProcessHandle for service
 }
 
@@ -32,7 +36,8 @@ data Config = Config {
             execDir     :: FilePath,
             serviceList :: FilePath,
             logFile     :: FilePath,
-            pidDir      :: FilePath
+            pidDir      :: FilePath,
+            port        :: Port
 } deriving Show
 
 data UinitdState = UinitdState {
@@ -42,3 +47,6 @@ data UinitdState = UinitdState {
 
 newtype Uinitd a = Uinitd (ReaderT Config (StateT UinitdState IO) a)
                    deriving (Monad, Applicative, Functor, MonadState UinitdState, MonadIO)
+
+data Command = Start SName
+             | Stop SName

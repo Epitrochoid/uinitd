@@ -17,7 +17,8 @@ defConfig = Config {
           execDir = "",
           serviceList = "",
           logFile = "",
-          pidDir = ""
+          pidDir = "",
+          port = 5000
 }
 
 defUinitdSt :: UinitdState
@@ -38,11 +39,13 @@ loadConfig cp = do
         serviceList <- C.get cp "" "enabled"
         logFile <- C.get cp "" "logfile"
         pidDir <- C.get cp "" "pid_directory"
+        port <- C.get cp "" "port"
         return $ Config {serviceDir = serviceDir,
                          execDir = execDir,
                          serviceList = serviceList,
                          logFile = logFile,
-                         pidDir = pidDir}
+                         pidDir = pidDir,
+                         port = port}
 
 loadService :: MonadError C.CPError m => C.ConfigParser -> C.SectionSpec -> m Service
 loadService cp sec = do

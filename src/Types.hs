@@ -33,6 +33,7 @@ instance Eq RService where
 instance Show RService where
         show RService{..} = rname
 
+-- | Global program configuration
 data Config = Config {
             serviceDir  :: FilePath,
             execDir     :: FilePath,
@@ -42,14 +43,17 @@ data Config = Config {
             port        :: Port
 } deriving Show
 
+-- | Global program state
 data UinitdState = UinitdState {
                  available :: [Service],
                  running   :: [RService]
 } deriving Show
 
+-- | Monad stack that carries configuration and state
 newtype Uinitd a = Uinitd (ReaderT Config (StateT UinitdState IO) a)
                    deriving (Monad, Applicative, Functor, MonadState UinitdState, MonadIO)
 
+-- | Daemon commands
 data Cmd = Start SName
          | Stop SName
          | Restart SName
@@ -57,6 +61,7 @@ data Cmd = Start SName
 
 instance Serialize Cmd
 
+-- | Daemon responses
 data Response = Failure String
               | Success
               deriving (Generic, Show)

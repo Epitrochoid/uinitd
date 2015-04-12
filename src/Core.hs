@@ -56,3 +56,10 @@ loadService cp sec = do
 loadServices ::MonadError C.CPError m => C.ConfigParser -> [C.SectionSpec] -> [m Service]
 loadServices cp = fmap (loadService cp)
 
+findService :: SName -> [Service] -> Maybe Service
+findService sname services = case filter (named sname) services of
+                                 [] -> Nothing
+                                 s -> Just $ head s
+    where
+        named serv Service{..} = serv == sname
+

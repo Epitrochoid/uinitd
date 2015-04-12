@@ -24,20 +24,6 @@ stopService service = do
         let removed = filter (\x -> x /= service) running
         put UinitdState {available = available, running = removed}
 
-
-loadConfig :: MonadError C.CPError m => C.ConfigParser -> m Config
-loadConfig cp = do
-        serviceDir <- C.get cp "" "services"
-        execDir <- C.get cp "" "executables"
-        serviceList <- C.get cp "" "enabled"
-        logFile <- C.get cp "" "logfile"
-        pidDir <- C.get cp "" "pid_directory"
-        return $ Config {serviceDir = serviceDir,
-                         execDir = execDir,
-                         serviceList = serviceList,
-                         logFile = logFile,
-                         pidDir = pidDir}
-
 loadParser :: MonadError C.CPError m => FilePath -> IO (m C.ConfigParser)
 loadParser filepath = do
         parser <- try $ C.readfile C.emptyCP filepath

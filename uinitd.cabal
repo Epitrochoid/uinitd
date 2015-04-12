@@ -16,7 +16,7 @@ build-type:          Simple
 -- extra-source-files:  
 cabal-version:       >=1.10
 
-executable uinitd
+executable uinitctl
   main-is:             Main.hs
   -- other-modules:       
   -- other-extensions:    

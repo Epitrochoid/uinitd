@@ -1,13 +1,15 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, RecordWildCards #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, RecordWildCards, DeriveGeneric #-}
 
 module Types where
 
 import Prelude hiding (FilePath)
+import GHC.Generics
 import System.IO (FilePath)
 import System.Process
 import System.Daemon
 import Control.Monad.State
 import Control.Monad.Reader
+import Data.Serialize (Serialize)
 
 -- | Name of a service
 type SName = String
@@ -48,5 +50,15 @@ data UinitdState = UinitdState {
 newtype Uinitd a = Uinitd (ReaderT Config (StateT UinitdState IO) a)
                    deriving (Monad, Applicative, Functor, MonadState UinitdState, MonadIO)
 
-data Command = Start SName
-             | Stop SName
+data Cmd = Start SName
+         | Stop SName
+         | Restart SName
+         deriving (Generic, Show)
+
+instance Serialize Cmd
+
+data Response = Failure String
+              | Success
+              deriving (Generic, Show)
+
+instance Serialize Response

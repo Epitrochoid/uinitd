@@ -9,14 +9,16 @@ import System.Console.CmdArgs
 import System.Environment (getArgs, withArgs)
 import qualified System.IO as S
 import Control.Monad (when)
+import Control.Monad.Except
+import Control.Monad.Trans.Error (runErrorT)
 
 data Options = Init { config :: S.FilePath
                     }
              | Start { config :: S.FilePath
-                     , sname :: String
+                     , sname :: SName
                      }
              | Stop { config :: S.FilePath
-                    , sname :: String
+                    , sname :: SName
                     }
                deriving (Show, Data, Typeable, Eq)
 
@@ -57,4 +59,25 @@ main = do
     opts <- (if null args then withArgs ["--help"] else id) $ cmdArgsRun prgModes
     optionHandler opts
 
-optionHandler = undefined
+optionHandler :: Options -> IO ()
+optionHandler Init{..} = do
+        confcheck <- confOrDefault config
+        conf <- case confcheck of
+                    (Just conffile) -> confHandler conffile
+                    Nothing -> error $ "No configuration file found"
+        initHandler conf
+
+confHandler :: FilePath -> IO Config
+confHandler conf = do
+        configuration <- runErrorT $ do
+                            cp <- join $ liftIO $ loadParser conf
+                            loadConfig cp
+        case configuration of
+            (Left e) -> error $ show e
+            (Right c) -> return c
+
+initHandler :: Config -> IO ()
+initHandler conf = undefined
+
+
+

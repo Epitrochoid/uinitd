@@ -59,24 +59,8 @@ main = do
     optionHandler opts
 
 optionHandler :: Options -> IO ()
-optionHandler Init{..} = do
-        confcheck <- confOrDefault config
-        conf <- case confcheck of
-                    (Just conffile) -> confHandler conffile
-                    Nothing -> error $ "No configuration file found"
-        initHandler conf
+optionHandler Init{..} = undefined
 
-confHandler :: FilePath -> IO Config
-confHandler conf = do
-        configuration <- runExceptT $ do
-                            cp <- join $ liftIO $ loadParser conf
-                            loadConfig cp
-        case configuration of
-            (Left e) -> error $ show e
-            (Right c) -> return c
-
-initHandler :: Config -> IO ()
-initHandler conf = undefined
 
 
 

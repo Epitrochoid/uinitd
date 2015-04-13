@@ -3,13 +3,21 @@
 module Core where
 
 import Types
+import Sys
 import Control.Monad.State
 import Control.Monad.Reader
 import qualified Data.ConfigFile as C
 import Control.Monad.Except
+import System.IO
 
 runUinitd :: Config -> UinitdState -> Uinitd a -> IO (Either C.CPError (a, UinitdState))
 runUinitd conf state (Uinitd a) = runExceptT (runStateT (runReaderT a conf) state)
+
+initUinitd :: FilePath -> Uinitd ()
+initUinitd confFile = do
+        conf <- confOrDefault confFile
+        cp <- loadParser conf
+        return ()
 
 
 defConfig :: Config

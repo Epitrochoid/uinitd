@@ -9,7 +9,9 @@ import System.Process
 import System.Daemon
 import Control.Monad.State
 import Control.Monad.Reader
+import Control.Monad.Except
 import Data.Serialize (Serialize)
+import qualified Data.ConfigFile as C
 
 -- | Name of a service
 type SName = String
@@ -50,7 +52,7 @@ data UinitdState = UinitdState {
 } deriving Show
 
 -- | Monad stack that carries configuration and state
-newtype Uinitd a = Uinitd (ReaderT Config (StateT UinitdState IO) a)
+newtype Uinitd a = Uinitd (ReaderT Config (StateT UinitdState (ExceptT C.CPError IO)) a)
                    deriving (Monad, Applicative, Functor, MonadState UinitdState, MonadIO)
 
 -- | Daemon commands

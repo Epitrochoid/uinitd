@@ -10,7 +10,6 @@ import System.Environment (getArgs, withArgs)
 import qualified System.IO as S
 import Control.Monad (when)
 import Control.Monad.Except
-import Control.Monad.Trans.Error (runErrorT)
 
 data Options = Init { config :: S.FilePath
                     }
@@ -69,7 +68,7 @@ optionHandler Init{..} = do
 
 confHandler :: FilePath -> IO Config
 confHandler conf = do
-        configuration <- runErrorT $ do
+        configuration <- runExceptT $ do
                             cp <- join $ liftIO $ loadParser conf
                             loadConfig cp
         case configuration of

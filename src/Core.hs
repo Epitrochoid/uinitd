@@ -8,8 +8,9 @@ import Control.Monad.Reader
 import qualified Data.ConfigFile as C
 import Control.Monad.Except
 
-runUinitd :: Config -> UinitdState -> Uinitd a -> IO (a, UinitdState)
-runUinitd conf state (Uinitd a) = runStateT (runReaderT a conf) state
+runUinitd :: Config -> UinitdState -> Uinitd a -> IO (Either C.CPError (a, UinitdState))
+runUinitd conf state (Uinitd a) = runExceptT (runStateT (runReaderT a conf) state)
+
 
 defConfig :: Config
 defConfig = Config {
@@ -53,8 +54,9 @@ loadService cp sec = do
         exec <- C.get cp sec "exec"
         return $ Service {sname = name, exec = exec}
 
-loadServices ::MonadError C.CPError m => C.ConfigParser -> [C.SectionSpec] -> [m Service]
+loadServices :: MonadError C.CPError m => C.ConfigParser -> [C.SectionSpec] -> [m Service]
 loadServices cp = fmap (loadService cp)
+
 
 -- | Finds a service by name, does not check that
 --   exec is the same. Presumes uniqueness of services

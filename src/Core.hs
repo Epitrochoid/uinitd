@@ -97,6 +97,14 @@ loadAllServices = do
                               errors = lefts full
                           in (mapM (journal . fromList . show) errors) >> (put UinitdState{available=servs, running=running})
 
+startServiceByName :: SName -> Uinitd Response
+startServiceByName service = do
+        UinitdState{..} <- get
+        let serv = findServiceByName service available
+        case serv of
+            Nothing -> return $ Failure $ "No service `" ++ service ++ "` found. \n"
+            (Just s) -> (startService s) >> (return Success)
+
 -- | Finds a service by name, does not check that
 --   exec is the same. Presumes uniqueness of services
 findServiceByName :: SName -> [Service] -> Maybe Service

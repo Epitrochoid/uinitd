@@ -7,9 +7,11 @@ import Sys
 import Prelude hiding (init)
 import System.Console.CmdArgs
 import System.Environment (getArgs, withArgs)
+import System.Daemon
 import qualified System.IO as S
 import Control.Monad (when)
 import Control.Monad.Except
+import Control.Concurrent.MVar (MVar, newMVar, takeMVar, putMVar)
 
 data Options = Init { config :: S.FilePath
                     }
@@ -62,13 +64,38 @@ optionHandler :: Options -> IO ()
 optionHandler Init{..} = do
         conf <- loadConfUnsafe config
         initHandler conf
+optionHandler Start{..} = do
+        conf <- loadConfUnsafe config
+        startHandler conf sname
 
 initHandler :: Config -> IO ()
 initHandler conf = do
+        let opts = DaemonOptions {daemonPort = port conf,
+                                  daemonPidFile = PidFile $ (pidDir conf) ++ "uinitd.pid",
+                                  printOnDaemonStarted = False}
         (_, s1) <- runUinitd conf defUinitdSt (loadAllServices)
         (_, s2) <- runUinitd conf s1 (startAllServices)
-        return ()
+        stateMVar <- newMVar s2
+        ensureDaemonRunning "uinitd" opts (daemon conf stateMVar)
 
+startHandler :: Config -> SName -> IO ()
+startHandler Config{..} service = do
+        resp <- runClient "localhost" port (CmdStart service)
+        case resp of
+            Nothing -> putStrLn "No response from server."
+            (Just r) -> case r of
+                            Success -> return ()
+                            (Failure f) -> putStrLn f
 
+daemon :: Config -> MVar UinitdState -> Cmd -> IO Response
+daemon conf stateMVar cmd = do
+        st <- takeMVar stateMVar
+        let toDo = case cmd of
+                       (CmdStart s) -> startServiceByName s
+                       (CmdStop r) -> startServiceByName r
+                       (CmdRestart r) -> startServiceByName r
+        (response, state) <- runUinitd conf st toDo
+        putMVar stateMVar state
+        return response
 
 

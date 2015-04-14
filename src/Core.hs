@@ -13,9 +13,12 @@ import System.IO
 import Data.Either
 import Data.DList
 
+-- | Run method for program monad stack
 runUinitd :: Config -> UinitdState -> Uinitd a -> IO (a, UinitdState)
 runUinitd conf state (Uinitd a) = evalJournalT (runStateT (runReaderT a conf) state)
 
+-- | Unsafe method for loading program configuration,
+--   terminates on failure and prints error.
 loadConfUnsafe :: MonadIO m => FilePath -> m Config
 loadConfUnsafe filePath = do
         conf <- confOrDefault filePath
@@ -29,6 +32,7 @@ loadConfUnsafe filePath = do
                                 (Left e) -> error $ "Fatal error:\n" ++ (show e)
                                 (Right c) -> return c
 
+-- | Minimum default configuration
 defConfig :: Config
 defConfig = Config {
           serviceDir = "",
@@ -39,17 +43,21 @@ defConfig = Config {
           port = 5000
 }
 
+-- | Minimum default state
 defUinitdSt :: UinitdState
 defUinitdSt = UinitdState {
             available = [],
             running = []
 }
 
+-- | Adds a service to the list of available services
+--   inside Uinitd
 addService :: Service -> Uinitd ()
 addService service = do
         UinitdState{..} <- get
         put UinitdState{available = service:available, running = running}
 
+-- | Builds a Config object from a ConfigParser
 loadConfig :: MonadError C.CPError m => C.ConfigParser -> m Config
 loadConfig cp = do
         serviceDir <- C.get cp "" "services"
@@ -65,15 +73,18 @@ loadConfig cp = do
                          pidDir = pidDir,
                          port = port}
 
+-- | Creates a single Service from the given section
 loadService :: MonadError C.CPError m => C.ConfigParser -> C.SectionSpec -> m Service
 loadService cp sec = do
         name <- C.get cp sec "name"
         exec <- C.get cp sec "exec"
         return $ Service {sname = name, exec = exec}
 
+-- | Minimal wrapper around loadService to load multiple
 loadServices :: MonadError C.CPError m => C.ConfigParser -> [C.SectionSpec] -> [m Service]
 loadServices cp = fmap (loadService cp)
 
+-- | Loads all available services inside a Uinitd
 loadAllServices :: Uinitd ()
 loadAllServices = do
         Config{..} <- ask

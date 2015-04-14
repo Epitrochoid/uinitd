@@ -10,6 +10,8 @@ import qualified Data.ConfigFile as C
 import Control.Monad.Except
 import Control.Monad.Trans.Journal
 import System.IO
+import Data.Either
+import Data.DList
 
 runUinitd :: Config -> UinitdState -> Uinitd a -> IO (a, UinitdState)
 runUinitd conf state (Uinitd a) = evalJournalT (runStateT (runReaderT a conf) state)
@@ -72,13 +74,24 @@ loadService cp sec = do
 loadServices :: MonadError C.CPError m => C.ConfigParser -> [C.SectionSpec] -> [m Service]
 loadServices cp = fmap (loadService cp)
 
+loadAllServices :: Uinitd ()
+loadAllServices = do
+        Config{..} <- ask
+        UinitdState{..} <- get
+        maybeCp <- loadParser serviceList
+        case maybeCp of
+            (Left e) -> journal $ fromList (show e)
+            (Right cp) -> let full = loadServices cp (C.sections cp)
+                              servs = rights full
+                              errors = lefts full
+                          in (mapM (journal . fromList . show) errors) >> (put UinitdState{available=servs, running=running})
 
 -- | Finds a service by name, does not check that
 --   exec is the same. Presumes uniqueness of services
 findServiceByName :: SName -> [Service] -> Maybe Service
 findServiceByName sname services = case filter (named sname) services of
                                  [] -> Nothing
-                                 s -> Just $ head s
+                                 s -> Just $ Prelude.head s
     where
         named serv Service{..} = serv == sname
 
@@ -87,4 +100,4 @@ findServiceByName sname services = case filter (named sname) services of
 findService :: Service -> [Service] -> Maybe Service
 findService serv servs = case filter (== serv) servs of
                              [] -> Nothing
-                             s -> Just $ head s
+                             s -> Just $ Prelude.head s

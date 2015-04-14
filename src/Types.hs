@@ -59,7 +59,7 @@ data UinitdState = UinitdState {
 
 -- | Monad stack that carries configuration and state
 newtype Uinitd a = Uinitd (ReaderT Config (StateT UinitdState (JournalT Log IO)) a)
-                   deriving (Monad, Applicative, Functor, MonadState UinitdState, MonadIO)
+                   deriving (Monad, Applicative, Functor, MonadState UinitdState, MonadIO, MonadReader Config, MonadJournal Log)
 
 -- | Daemon commands
 data Cmd = CmdStart SName

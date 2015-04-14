@@ -31,18 +31,18 @@ stopService service = do
         let removed = filter (\x -> x /= service) running
         put UinitdState {available = available, running = removed}
 
-loadParser :: MonadError C.CPError m => FilePath -> IO (m C.ConfigParser)
+loadParser :: (MonadError C.CPError ma, MonadIO mb) => FilePath -> mb (ma C.ConfigParser)
 loadParser filepath = do
-        parser <- try $ C.readfile C.emptyCP filepath
+        parser <- liftIO $ try $ C.readfile C.emptyCP filepath
         case parser of
             (Left (SomeException e)) -> return $ throwError (C.OtherProblem (show e), "loadParser")
             (Right cp) -> return cp
 
-confOrDefault :: FilePath -> IO (Maybe FilePath)
+confOrDefault :: MonadIO m => FilePath -> m (Maybe FilePath)
 confOrDefault given = do
         let a = not $ null given
-        b <- doesFileExist userLoc
-        c <- doesFileExist sysLoc
+        b <- liftIO $ doesFileExist userLoc
+        c <- liftIO $ doesFileExist sysLoc
         return $ case (a, b, c) of
                       (False, False, True) -> Just sysLoc
                       (False, True, _) -> Just userLoc

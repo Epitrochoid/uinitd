@@ -13,7 +13,7 @@ import System.IO
 runUinitd :: Config -> UinitdState -> Uinitd a -> IO (Either C.CPError (a, UinitdState))
 runUinitd conf state (Uinitd a) = runExceptT (runStateT (runReaderT a conf) state)
 
-loadConfUnsafe :: FilePath -> IO Config
+loadConfUnsafe :: MonadIO m => FilePath -> m Config
 loadConfUnsafe filePath = do
         conf <- confOrDefault filePath
         cp <- case conf of

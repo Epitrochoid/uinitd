@@ -31,23 +31,23 @@ stopService service = do
         let removed = filter (\x -> x /= service) running
         put UinitdState {available = available, running = removed}
 
-loadParser :: FilePath -> Uinitd C.ConfigParser
+loadParser :: MonadError C.CPError m => FilePath -> IO (m C.ConfigParser)
 loadParser filepath = do
-        parser <- liftIO $ try $ C.readfile C.emptyCP filepath
+        parser <- try $ C.readfile C.emptyCP filepath
         case parser of
-            (Left (SomeException e)) -> throwError (C.OtherProblem (show e), "loadParser")
-            (Right cp) -> cp
+            (Left (SomeException e)) -> return $ throwError (C.OtherProblem (show e), "loadParser")
+            (Right cp) -> return cp
 
-confOrDefault :: FilePath -> Uinitd FilePath
+confOrDefault :: FilePath -> IO (Maybe FilePath)
 confOrDefault given = do
         let a = not $ null given
-        b <- liftIO $ doesFileExist userLoc
-        c <- liftIO $ doesFileExist sysLoc
-        case (a, b, c) of
-             (False, False, True) -> return sysLoc
-             (False, True, _) -> return userLoc
-             (True, _, _) -> return given
-             _ -> throwError (C.OtherProblem "Program configuration file not found.", "confOrDefault")
+        b <- doesFileExist userLoc
+        c <- doesFileExist sysLoc
+        return $ case (a, b, c) of
+                      (False, False, True) -> Just sysLoc
+                      (False, True, _) -> Just userLoc
+                      (True, _, _) -> Just userLoc
+                      _ -> Nothing
     where
-        userLoc = "~/.config/uinitd.conf"
-        sysLoc = "/etc/uinitd.conf"
+        userLoc = "~/.config/uinitd.conf" :: FilePath
+        sysLoc = "/etc/uinitd.conf" :: FilePath

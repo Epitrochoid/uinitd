@@ -13,13 +13,6 @@ import System.IO
 runUinitd :: Config -> UinitdState -> Uinitd a -> IO (Either C.CPError (a, UinitdState))
 runUinitd conf state (Uinitd a) = runExceptT (runStateT (runReaderT a conf) state)
 
-initUinitd :: FilePath -> Uinitd ()
-initUinitd confFile = do
-        conf <- confOrDefault confFile
-        cp <- loadParser conf
-        return ()
-
-
 defConfig :: Config
 defConfig = Config {
           serviceDir = "",
@@ -41,7 +34,7 @@ addService service = do
         UinitdState{..} <- get
         put UinitdState{available = service:available, running = running}
 
-loadConfig :: MonadError C.CPError m => C.ConfigParser -> m Config
+loadConfig :: C.ConfigParser -> Uinitd Config
 loadConfig cp = do
         serviceDir <- C.get cp "" "services"
         execDir <- C.get cp "" "executables"

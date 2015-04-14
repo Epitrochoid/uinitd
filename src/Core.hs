@@ -13,6 +13,19 @@ import System.IO
 runUinitd :: Config -> UinitdState -> Uinitd a -> IO (Either C.CPError (a, UinitdState))
 runUinitd conf state (Uinitd a) = runExceptT (runStateT (runReaderT a conf) state)
 
+loadConfUnsafe :: FilePath -> IO Config
+loadConfUnsafe filePath = do
+        conf <- confOrDefault filePath
+        cp <- case conf of
+                  Nothing -> error "Program configuration file not found."
+                  (Just c) -> loadParser c
+        case cp of
+            (Left e) -> error $ "Fatal error:\n" ++ (show e)
+            (Right c) -> let config = loadConfig c
+                         in case config of
+                                (Left e) -> error $ "Fatal error:\n" ++ (show e)
+                                (Right c) -> return c
+
 defConfig :: Config
 defConfig = Config {
           serviceDir = "",
@@ -34,7 +47,7 @@ addService service = do
         UinitdState{..} <- get
         put UinitdState{available = service:available, running = running}
 
-loadConfig :: C.ConfigParser -> Uinitd Config
+loadConfig :: MonadError C.CPError m => C.ConfigParser -> m Config
 loadConfig cp = do
         serviceDir <- C.get cp "" "services"
         execDir <- C.get cp "" "executables"

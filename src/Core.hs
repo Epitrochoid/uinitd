@@ -8,10 +8,11 @@ import Control.Monad.State
 import Control.Monad.Reader
 import qualified Data.ConfigFile as C
 import Control.Monad.Except
+import Control.Monad.Trans.Journal
 import System.IO
 
-runUinitd :: Config -> UinitdState -> Uinitd a -> IO (Either C.CPError (a, UinitdState))
-runUinitd conf state (Uinitd a) = runExceptT (runStateT (runReaderT a conf) state)
+runUinitd :: Config -> UinitdState -> Uinitd a -> IO (a, UinitdState)
+runUinitd conf state (Uinitd a) = evalJournalT (runStateT (runReaderT a conf) state)
 
 loadConfUnsafe :: MonadIO m => FilePath -> m Config
 loadConfUnsafe filePath = do

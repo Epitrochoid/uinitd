@@ -10,11 +10,17 @@ import System.Daemon
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Monad.Except
+import Control.Monad.Journal
+import Control.Monad.Trans.Journal
 import Data.Serialize (Serialize)
+import Data.DList
 import qualified Data.ConfigFile as C
 
 -- | Name of a service
 type SName = String
+
+-- | Efficient structure for appending logs
+type Log = DList Char
 
 -- | Type for a loaded, but not running service
 data Service = Service {
@@ -52,8 +58,8 @@ data UinitdState = UinitdState {
 } deriving Show
 
 -- | Monad stack that carries configuration and state
-newtype Uinitd a = Uinitd (ReaderT Config (StateT UinitdState (ExceptT C.CPError IO)) a)
-                   deriving (Monad, Applicative, Functor, MonadState UinitdState, MonadIO, MonadError C.CPError)
+newtype Uinitd a = Uinitd (ReaderT Config (StateT UinitdState (JournalT Log IO)) a)
+                   deriving (Monad, Applicative, Functor, MonadState UinitdState, MonadIO)
 
 -- | Daemon commands
 data Cmd = CmdStart SName

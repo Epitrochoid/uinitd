@@ -46,7 +46,7 @@ confOrDefault given = do
         return $ case (a, b, c) of
                       (False, False, True) -> Just sysLoc
                       (False, True, _) -> Just userLoc
-                      (True, _, _) -> Just userLoc
+                      (True, _, _) -> Just given
                       _ -> Nothing
     where
         userLoc = "~/.config/uinitd.conf" :: FilePath

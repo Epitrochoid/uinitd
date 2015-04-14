@@ -59,7 +59,15 @@ main = do
     optionHandler opts
 
 optionHandler :: Options -> IO ()
-optionHandler Init{..} = undefined
+optionHandler Init{..} = do
+        conf <- loadConfUnsafe config
+        initHandler conf
+
+initHandler :: Config -> IO ()
+initHandler conf = do
+        (_, s1) <- runUinitd conf defUinitdSt (loadAllServices)
+        (_, s2) <- runUinitd conf s1 (startAllServices)
+        return ()
 
 
 

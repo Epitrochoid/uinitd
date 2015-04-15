@@ -82,17 +82,14 @@ initHandler conf = do
         ensureDaemonRunning "uinitd" opts (daemon conf stateMVar)
 
 startHandler :: Config -> SName -> IO ()
-startHandler Config{..} service = do
-        resp <- runClient "localhost" port (CmdStart service)
-        case resp of
-            Nothing -> putStrLn "No response from server."
-            (Just r) -> case r of
-                            Success -> return ()
-                            (Failure f) -> putStrLn f
+startHandler conf service = runClientCmd conf (CmdStart service)
 
 stopHandler :: Config -> SName -> IO ()
-stopHandler Config{..} service = do
-        resp <- runClient "localhost" port (CmdStop service)
+stopHandler conf service = runClientCmd conf (CmdStop service)
+
+runClientCmd :: Config -> Cmd -> IO ()
+runClientCmd Config{..} cmd = do
+        resp <- runClient "localhost" port cmd
         case resp of
             Nothing -> putStrLn "No response from server."
             (Just r) -> case r of

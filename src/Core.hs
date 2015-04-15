@@ -105,14 +105,31 @@ startServiceByName service = do
             Nothing -> return $ Failure $ "No service `" ++ service ++ "` found. \n"
             (Just s) -> (startService s) >> (return Success)
 
+stopServiceByName :: SName -> Uinitd Response
+stopServiceByName service = do
+        UinitdState{..} <- get
+        let serv = findRServiceByName service running
+        case serv of
+            Nothing -> return $ Failure $ "No service `" ++ service ++ "` running.\n"
+            (Just s) -> (stopService s) >> (return Success)
+
 -- | Finds a service by name, does not check that
 --   exec is the same. Presumes uniqueness of services
 findServiceByName :: SName -> [Service] -> Maybe Service
 findServiceByName sname services = case filter (named sname) services of
-                                 [] -> Nothing
-                                 s -> Just $ Prelude.head s
+                                        [] -> Nothing
+                                        s -> Just $ Prelude.head s
     where
         named serv Service{..} = serv == sname
+
+-- | Finds a running service by name, does not check
+--   pid.
+findRServiceByName :: SName -> [RService] -> Maybe RService
+findRServiceByName rname services = case filter (named rname) services of
+                                        [] -> Nothing
+                                        r -> Just $ Prelude.head r
+    where
+        named serv RService{..} = serv == rname
 
 -- | Finds a service by identity, sname and
 --   exec must be the same. Presumes uniqueness of services.

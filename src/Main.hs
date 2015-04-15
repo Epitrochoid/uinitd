@@ -67,6 +67,9 @@ optionHandler Init{..} = do
 optionHandler Start{..} = do
         conf <- loadConfUnsafe config
         startHandler conf sname
+optionHandler Stop{..} = do
+        conf <- loadConfUnsafe config
+        stopHandler conf sname
 
 initHandler :: Config -> IO ()
 initHandler conf = do
@@ -87,12 +90,21 @@ startHandler Config{..} service = do
                             Success -> return ()
                             (Failure f) -> putStrLn f
 
+stopHandler :: Config -> SName -> IO ()
+stopHandler Config{..} service = do
+        resp <- runClient "localhost" port (CmdStop service)
+        case resp of
+            Nothing -> putStrLn "No response from server."
+            (Just r) -> case r of
+                            Success -> return ()
+                            (Failure f) -> putStrLn f
+
 daemon :: Config -> MVar UinitdState -> Cmd -> IO Response
 daemon conf stateMVar cmd = do
         st <- takeMVar stateMVar
         let toDo = case cmd of
                        (CmdStart s) -> startServiceByName s
-                       (CmdStop r) -> startServiceByName r
+                       (CmdStop r) -> stopServiceByName r
                        (CmdRestart r) -> startServiceByName r
         (response, state) <- runUinitd conf st toDo
         putMVar stateMVar state

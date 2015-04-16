@@ -113,6 +113,13 @@ stopServiceByName service = do
             Nothing -> return $ Failure $ "No service `" ++ service ++ "` running.\n"
             (Just s) -> (stopService s) >> (return Success)
 
+restartServiceByName :: SName -> Uinitd Response
+restartServiceByName service = do
+        stop <- stopServiceByName service
+        case stop of
+            (Failure f) -> return $ Failure f
+            Success -> startServiceByName service
+
 -- | Finds a service by name, does not check that
 --   exec is the same. Presumes uniqueness of services
 findServiceByName :: SName -> [Service] -> Maybe Service

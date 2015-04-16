@@ -21,6 +21,9 @@ data Options = Init { config :: S.FilePath
              | Stop { config :: S.FilePath
                     , sname :: SName
                     }
+             | Restart { config :: S.FilePath
+                       , sname :: SName
+                       }
                deriving (Show, Data, Typeable, Eq)
 
 init :: Options
@@ -40,8 +43,15 @@ stop = Stop { config = def &= help "uinitd configuration file"
             }
             &= details ["Stop a service."]
 
+restart :: Options
+restart = Restart { config = def &= help "uinitd configuration file"
+                  , sname = def &= help "name of service"
+                  }
+                  &= details ["Restart a service."]
+
+
 prgModes :: Mode (CmdArgs Options)
-prgModes = cmdArgsMode $ modes [init, start, stop]
+prgModes = cmdArgsMode $ modes [init, start, stop, restart]
     &= verbosityArgs [explicit, name "Verbose", name "V"] []
     &= versionArg [explicit, name "version", name "v", summary _PROGRAM_INFO]
     &= summary (_PROGRAM_INFO)
@@ -70,6 +80,9 @@ optionHandler Start{..} = do
 optionHandler Stop{..} = do
         conf <- loadConfUnsafe config
         stopHandler conf sname
+optionHandler Restart{..} = do
+        conf <- loadConfUnsafe config
+        restartHandler conf sname
 
 initHandler :: Config -> IO ()
 initHandler conf = do
@@ -87,6 +100,9 @@ startHandler conf service = runClientCmd conf (CmdStart service)
 stopHandler :: Config -> SName -> IO ()
 stopHandler conf service = runClientCmd conf (CmdStop service)
 
+restartHandler :: Config -> SName -> IO ()
+restartHandler conf service = runClientCmd conf (CmdRestart service)
+
 runClientCmd :: Config -> Cmd -> IO ()
 runClientCmd Config{..} cmd = do
         resp <- runClient "localhost" port cmd
@@ -102,7 +118,7 @@ daemon conf stateMVar cmd = do
         let toDo = case cmd of
                        (CmdStart s) -> startServiceByName s
                        (CmdStop r) -> stopServiceByName r
-                       (CmdRestart r) -> startServiceByName r
+                       (CmdRestart r) -> restartServiceByName r
         (response, state) <- runUinitd conf st toDo
         putMVar stateMVar state
         return response

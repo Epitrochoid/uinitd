@@ -32,17 +32,6 @@ loadConfUnsafe filePath = do
                                 (Left e) -> error $ "Fatal error:\n" ++ (show e)
                                 (Right c) -> return c
 
--- | Minimum default configuration
-defConfig :: Config
-defConfig = Config {
-          serviceDir = "",
-          execDir = "",
-          serviceList = "",
-          logFile = "",
-          pidDir = "",
-          port = 5000
-}
-
 -- | Minimum default state
 defUinitdSt :: UinitdState
 defUinitdSt = UinitdState {

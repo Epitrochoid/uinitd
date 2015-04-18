@@ -12,6 +12,7 @@ import qualified System.IO as S
 import Control.Monad (when)
 import Control.Monad.Except
 import Control.Concurrent.MVar (MVar, newMVar, takeMVar, putMVar)
+import qualified Data.Default as D
 
 data Options = Init { config :: S.FilePath
                     }
@@ -89,7 +90,7 @@ initHandler conf = do
         let opts = DaemonOptions {daemonPort = port conf,
                                   daemonPidFile = PidFile $ (pidDir conf) ++ "uinitd.pid",
                                   printOnDaemonStarted = False}
-        (_, s1) <- runUinitd conf defUinitdSt (loadAllServices)
+        (_, s1) <- runUinitd conf D.def (loadAllServices)
         (_, s2) <- runUinitd conf s1 (startAllServices)
         stateMVar <- newMVar s2
         ensureDaemonRunning "uinitd" opts (daemon conf stateMVar)

@@ -14,6 +14,7 @@ import Control.Monad.Journal
 import Control.Monad.Trans.Journal
 import Data.Serialize (Serialize)
 import Data.DList
+import Data.Default
 import qualified Data.ConfigFile as C
 
 -- | Name of a service
@@ -51,11 +52,22 @@ data Config = Config {
             port        :: Port
 } deriving Show
 
+instance Default Config where
+        def = Config {serviceDir = "",
+                      execDir = "",
+                      serviceList = "",
+                      logFile = "",
+                      pidDir = "",
+                      port = 5000}
+
 -- | Global program state
 data UinitdState = UinitdState {
                  available :: [Service],
                  running   :: [RService]
 } deriving Show
+
+instance Default UinitdState where
+        def = UinitdState {available = [], running = []}
 
 -- | Monad stack that carries configuration and state
 newtype Uinitd a = Uinitd (ReaderT Config (StateT UinitdState (JournalT Log IO)) a)

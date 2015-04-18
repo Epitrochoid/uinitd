@@ -92,9 +92,6 @@ loadServicesFromDir = do
             servs = rights services
         mapM (journal . fromList . show) errors2
         put UinitdState{available = servs ++ available, running = running}
-        printed <- history
-        liftIO $ putStrLn $ toList printed
-
 
 
 startServiceByName :: SName -> Uinitd Response

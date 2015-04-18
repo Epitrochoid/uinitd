@@ -5,7 +5,7 @@ module Sys where
 import Types
 import System.Process
 import System.IO
-import System.Directory (doesFileExist)
+import System.Directory (doesFileExist, getDirectoryContents)
 import qualified Data.ConfigFile as C
 import Control.Exception
 import Control.Monad.Except
@@ -37,6 +37,13 @@ loadParser filepath = do
         case parser of
             (Left (SomeException e)) -> return $ throwError (C.OtherProblem (show e), "loadParser")
             (Right cp) -> return cp
+
+loadParserList :: (MonadError C.CPError ma, MonadIO mb) => FilePath -> mb ([ma C.ConfigParser])
+loadParserList directory = do
+        filepaths <- liftIO $ try $ getDirectoryContents directory
+        case filepaths of
+            (Left (SomeException e)) -> return [throwError (C.OtherProblem (show e), "loadParserList")]
+            (Right fps) -> mapM loadParser (fmap (directory ++) fps)
 
 confOrDefault :: MonadIO m => FilePath -> m (Maybe FilePath)
 confOrDefault given = do

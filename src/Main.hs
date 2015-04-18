@@ -102,7 +102,8 @@ initHandler conf = do
                                   printOnDaemonStarted = False}
         (_, s1) <- runUinitd conf D.def (loadAllServices)
         (_, s2) <- runUinitd conf s1 (startAllServices)
-        stateMVar <- newMVar s2
+        (_, s3) <- runUinitd conf s2 (loadServicesFromDir)
+        stateMVar <- newMVar s3
         ensureDaemonRunning "uinitd" opts (daemon conf stateMVar)
 
 startHandler :: Config -> SName -> IO ()

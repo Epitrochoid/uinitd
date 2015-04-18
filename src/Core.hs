@@ -79,6 +79,24 @@ loadAllServices = do
                               errors = lefts full
                           in (mapM (journal . fromList . show) errors) >> (put UinitdState{available=servs, running=running})
 
+loadServicesFromDir :: Uinitd ()
+loadServicesFromDir = do
+        UinitdState{..} <- get
+        Config{..} <- ask
+        parsers <- loadParserList serviceDir
+        let errors = lefts parsers
+            cps = rights parsers
+        mapM (journal . fromList . show) errors
+        let services = fmap (flip loadService $ "") cps
+        let errors2 = lefts services
+            servs = rights services
+        mapM (journal . fromList . show) errors2
+        put UinitdState{available = servs ++ available, running = running}
+        printed <- history
+        liftIO $ putStrLn $ toList printed
+
+
+
 startServiceByName :: SName -> Uinitd Response
 startServiceByName service = do
         UinitdState{..} <- get

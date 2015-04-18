@@ -27,7 +27,12 @@ type Log = DList Char
 data Service = Service {
              sname :: SName,  -- ^ Name of service
              exec  :: FilePath -- ^ File to execute
-} deriving (Show, Eq)
+} deriving (Eq, Generic)
+
+instance Show Service where
+        show Service{..} = sname ++ ": " ++ exec
+
+instance Serialize Service
 
 -- | Type for a running service
 data RService = RService {
@@ -77,6 +82,7 @@ newtype Uinitd a = Uinitd (ReaderT Config (StateT UinitdState (JournalT Log IO))
 data Cmd = CmdStart SName
          | CmdStop SName
          | CmdRestart SName
+         | CmdList
          deriving (Generic, Show)
 
 instance Serialize Cmd
@@ -84,6 +90,7 @@ instance Serialize Cmd
 -- | Daemon responses
 data Response = Failure String
               | Success
+              | ServList [Service]
               deriving (Generic, Show)
 
 instance Serialize Response

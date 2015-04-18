@@ -32,13 +32,6 @@ loadConfUnsafe filePath = do
                                 (Left e) -> error $ "Fatal error:\n" ++ (show e)
                                 (Right c) -> return c
 
--- | Minimum default state
-defUinitdSt :: UinitdState
-defUinitdSt = UinitdState {
-            available = [],
-            running = []
-}
-
 -- | Adds a service to the list of available services
 --   inside Uinitd
 addService :: Service -> Uinitd ()
@@ -108,6 +101,11 @@ restartServiceByName service = do
         case stop of
             (Failure f) -> return $ Failure f
             Success -> startServiceByName service
+
+listServices :: Uinitd Response
+listServices = do
+        UinitdState{..} <- get
+        return $ ServList available
 
 -- | Finds a service by name, does not check that
 --   exec is the same. Presumes uniqueness of services

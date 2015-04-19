@@ -9,6 +9,7 @@ import System.Directory (doesFileExist, getDirectoryContents)
 import qualified Data.ConfigFile as C
 import Data.DList
 import Control.Exception
+import Control.Monad
 import Control.Monad.Except
 import Control.Monad.State
 import Control.Monad.Journal
@@ -69,3 +70,18 @@ writeOutLog = do
         log <- history
         liftIO $ appendFile logFile (toList log)
         clear
+
+writeCPtoFile :: MonadIO m => FilePath -> C.ConfigParser -> m (Either C.CPError ())
+writeCPtoFile filepath cp = do
+        let out = C.to_string cp
+        result <- runExceptT $ do
+            check <- liftIO $ doesFileExist filepath
+            when check $ throwError (C.OtherProblem "File already exists.", "")
+            write <- liftIO $ try $ writeFile filepath out
+            case write of
+                (Left (SomeException e)) -> throwError (C.OtherProblem (show e), "writeCPtoFile")
+                _ -> return ()
+        return result
+
+
+

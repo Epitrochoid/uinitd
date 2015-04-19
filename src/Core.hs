@@ -148,3 +148,22 @@ findService :: Service -> [Service] -> Maybe Service
 findService serv servs = case filter (== serv) servs of
                              [] -> Nothing
                              s -> Just $ Prelude.head s
+
+serviceToCP :: (MonadError C.CPError m) => Service -> m C.ConfigParser
+serviceToCP Service{..} = do
+        let cp = C.emptyCP
+        cp <- C.set cp "" "name" sname
+        cp <- C.set cp "" "exec" exec
+        return cp
+
+createService :: Service -> Uinitd ()
+createService service = do
+        Config{..} <- ask
+        let filepath = serviceDir ++ (sname service) ++ ".service"
+        result <- runExceptT $ do
+            cp <- serviceToCP service
+            writeCPtoFile filepath cp
+        case result of
+            (Left e) -> liftIO $ putStrLn (show e)
+            _ -> return ()
+

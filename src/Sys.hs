@@ -7,9 +7,12 @@ import System.Process
 import System.IO
 import System.Directory (doesFileExist, getDirectoryContents)
 import qualified Data.ConfigFile as C
+import Data.DList
 import Control.Exception
 import Control.Monad.Except
 import Control.Monad.State
+import Control.Monad.Journal
+import Control.Monad.Reader
 
 startService :: Service -> Uinitd RService
 startService Service{..} = do
@@ -58,3 +61,11 @@ confOrDefault given = do
     where
         userLoc = "~/.config/uinitd.conf" :: FilePath
         sysLoc = "/etc/uinitd.conf" :: FilePath
+
+writeOutLog :: Uinitd ()
+writeOutLog = do
+        Config{..} <- ask
+        UinitdState{..} <- get
+        log <- history
+        liftIO $ appendFile logFile (toList log)
+        clear

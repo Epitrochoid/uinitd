@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings, RecordWildCards, DeriveDataTypeable #-}
 
 import Types hiding (sname, exec)
+import qualified Types as T
 import Core
 import Sys
 
@@ -27,6 +28,10 @@ data Options = Init { config :: S.FilePath
                        }
              | List { config :: S.FilePath
                     }
+             | Create { config :: S.FilePath
+                      , sname :: SName
+                      , exec :: FilePath
+                      }
                deriving (Show, Data, Typeable, Eq)
 
 init :: Options
@@ -57,9 +62,16 @@ list = List { config = def &= help "uinitd configuration file"
             }
             &= details ["List available services."]
 
+create :: Options
+create = Create { config = def &= help "uinitd configuration file"
+                , sname = def &= help "name of service"
+                , exec = "" &= help "location of executable"
+                }
+                &= details ["Creates a new service."]
+
 
 prgModes :: Mode (CmdArgs Options)
-prgModes = cmdArgsMode $ modes [init, start, stop, restart, list]
+prgModes = cmdArgsMode $ modes [init, start, stop, restart, list, create]
     &= verbosityArgs [explicit, name "Verbose", name "V"] []
     &= versionArg [explicit, name "version", name "v", summary _PROGRAM_INFO]
     &= summary (_PROGRAM_INFO)
@@ -94,6 +106,9 @@ optionHandler Restart{..} = do
 optionHandler List{..} = do
         conf <- loadConfUnsafe config
         listHandler conf
+optionHandler Create{..} = do
+        conf <- loadConfUnsafe config
+        createHandler conf sname exec
 
 initHandler :: Config -> IO ()
 initHandler conf = do
@@ -124,6 +139,8 @@ listHandler Config{..} = do
                             (Failure f) -> putStrLn f
                             (ServList l) -> (mapM_ (putStrLn . show) l) >> (return ())
 
+createHandler :: Config -> SName -> FilePath -> IO ()
+createHandler conf service executable = runClientCmd conf (CmdCreate service executable)
 
 runClientCmd :: Config -> Cmd -> IO ()
 runClientCmd Config{..} cmd = do
@@ -142,6 +159,7 @@ daemon conf stateMVar cmd = do
                        (CmdStop r) -> stopServiceByName r
                        (CmdRestart r) -> restartServiceByName r
                        CmdList -> listServices
+                       (CmdCreate s e) -> createService Service{T.sname=s, T.exec=e}
         (response, state) <- runUinitd conf st toDo
         putMVar stateMVar state
         return response

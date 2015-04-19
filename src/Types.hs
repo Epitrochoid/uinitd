@@ -83,6 +83,7 @@ data Cmd = CmdStart SName
          | CmdStop SName
          | CmdRestart SName
          | CmdList
+         | CmdCreate SName FilePath
          deriving (Generic, Show)
 
 instance Serialize Cmd

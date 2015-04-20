@@ -32,6 +32,9 @@ data Options = Init { config :: S.FilePath
                       , sname :: SName
                       , exec :: FilePath
                       }
+             | Enable { config :: S.FilePath
+                      , sname :: SName
+                      }
                deriving (Show, Data, Typeable, Eq)
 
 init :: Options
@@ -69,9 +72,15 @@ create = Create { config = def &= help "uinitd configuration file"
                 }
                 &= details ["Creates a new service."]
 
+enable :: Options
+enable = Enable { config = def &= help "uinitd configuration file"
+                , sname = def &= help "name of service"
+                }
+                &= details ["Enables a service to start on init."]
+
 
 prgModes :: Mode (CmdArgs Options)
-prgModes = cmdArgsMode $ modes [init, start, stop, restart, list, create]
+prgModes = cmdArgsMode $ modes [init, start, stop, restart, list, create, enable]
     &= verbosityArgs [explicit, name "Verbose", name "V"] []
     &= versionArg [explicit, name "version", name "v", summary _PROGRAM_INFO]
     &= summary (_PROGRAM_INFO)
@@ -109,6 +118,9 @@ optionHandler List{..} = do
 optionHandler Create{..} = do
         conf <- loadConfUnsafe config
         createHandler conf sname exec
+optionHandler Enable{..} = do
+        conf <- loadConfUnsafe config
+        enableHandler conf sname
 
 initHandler :: Config -> IO ()
 initHandler conf = do
@@ -142,6 +154,9 @@ listHandler Config{..} = do
 createHandler :: Config -> SName -> FilePath -> IO ()
 createHandler conf service executable = runClientCmd conf (CmdCreate service executable)
 
+enableHandler :: Config -> SName -> IO ()
+enableHandler conf service = runClientCmd conf (CmdEnable service)
+
 runClientCmd :: Config -> Cmd -> IO ()
 runClientCmd Config{..} cmd = do
         resp <- runClient "localhost" port cmd
@@ -160,6 +175,7 @@ daemon conf stateMVar cmd = do
                        (CmdRestart r) -> restartServiceByName r
                        CmdList -> listServices
                        (CmdCreate s e) -> createService Service{T.sname=s, T.exec=e}
+                       (CmdEnable s) -> enableServiceByName s
         (response, state) <- runUinitd conf st toDo
         putMVar stateMVar state
         return response

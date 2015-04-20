@@ -77,7 +77,7 @@ loadAllServices = do
             (Right cp) -> let full = loadServices cp (C.sections cp)
                               servs = rights full
                               errors = lefts full
-                          in (mapM (journal . fromList . show) errors) >> (put UinitdState{available=servs, running=running, enabled = enabled})
+                          in (mapM (journal . fromList . show) errors) >> (put UinitdState{available=servs, running=running, enabled = servs})
         writeOutLog
 
 loadServicesFromDir :: Uinitd ()
@@ -92,7 +92,7 @@ loadServicesFromDir = do
         let errors2 = lefts services
             servs = rights services
         mapM (journal . fromList . show) errors2
-        put UinitdState{available = servs ++ available, running = running, enabled = servs ++ enabled}
+        put UinitdState{available = servs ++ available, running = running, enabled = enabled}
         writeOutLog
 
 
@@ -149,17 +149,20 @@ findService serv servs = case filter (== serv) servs of
                              [] -> Nothing
                              s -> Just $ Prelude.head s
 
-serviceToCP :: (MonadError C.CPError m) => Service -> m C.ConfigParser
-serviceToCP Service{..} = do
+serviceToCP :: (MonadError C.CPError m) => Bool -> Service -> m C.ConfigParser
+serviceToCP sec Service{..} = do
         let cp = C.emptyCP
-        cp <- C.add_section cp ""
-        cp <- C.set cp "" "name" sname
-        cp <- C.set cp "" "exec" exec
+        let section = case sec of
+                          True -> sname
+                          False -> ""
+        cp <- C.add_section cp section
+        cp <- C.set cp section "name" sname
+        cp <- C.set cp section "exec" exec
         return cp
 
 serviceListToCP :: (MonadError C.CPError m) => [Service] -> m C.ConfigParser
 serviceListToCP services = do
-        cps <- mapM serviceToCP services
+        cps <- mapM (serviceToCP True) services
         return $ foldl C.merge C.emptyCP cps
 
 createService :: Service -> Uinitd Response
@@ -167,14 +170,14 @@ createService service = do
         Config{..} <- ask
         let filepath = serviceDir ++ (sname service) ++ ".service"
         result <- runExceptT $ do
-            cp <- serviceToCP service
+            cp <- serviceToCP False service
             writeCPtoFile filepath cp
         case result of
             (Left e) -> return $ Failure (show e)
             _ -> return Success
 
 enableService :: Service -> Uinitd Response
-enableService Service{..} = do
+enableService serv@Service{..} = do
         Config{..} <- ask
         UinitdState{..} <- get
         result <- runExceptT $ do
@@ -186,14 +189,14 @@ enableService Service{..} = do
             writeCPtoFile serviceList final
         case result of
             (Left e) -> return $ Failure (show e)
-            _ -> return Success
+            _ -> (put UinitdState{running=running, available=available, enabled=serv:enabled}) >> (return Success)
 
 enableServiceByName :: SName -> Uinitd Response
 enableServiceByName service = do
         UinitdState{..} <- get
         let serv = findServiceByName service available
         case serv of
-            Nothing -> return $ Failure "No such service named `" ++ service ++ "`."
+            Nothing -> return $ Failure $ "No such service named `" ++ service ++ "`."
             (Just s) -> enableService s
 
 

@@ -37,7 +37,7 @@ loadConfUnsafe filePath = do
 addService :: Service -> Uinitd ()
 addService service = do
         UinitdState{..} <- get
-        put UinitdState{available = service:available, running = running}
+        put UinitdState{available = service:available, running = running, enabled = enabled}
 
 -- | Builds a Config object from a ConfigParser
 loadConfig :: MonadError C.CPError m => C.ConfigParser -> m Config
@@ -77,7 +77,7 @@ loadAllServices = do
             (Right cp) -> let full = loadServices cp (C.sections cp)
                               servs = rights full
                               errors = lefts full
-                          in (mapM (journal . fromList . show) errors) >> (put UinitdState{available=servs, running=running})
+                          in (mapM (journal . fromList . show) errors) >> (put UinitdState{available=servs, running=running, enabled = enabled})
         writeOutLog
 
 loadServicesFromDir :: Uinitd ()
@@ -92,7 +92,7 @@ loadServicesFromDir = do
         let errors2 = lefts services
             servs = rights services
         mapM (journal . fromList . show) errors2
-        put UinitdState{available = servs ++ available, running = running}
+        put UinitdState{available = servs ++ available, running = running, enabled = servs ++ enabled}
         writeOutLog
 
 
@@ -157,6 +157,11 @@ serviceToCP Service{..} = do
         cp <- C.set cp "" "exec" exec
         return cp
 
+serviceListToCP :: (MonadError C.CPError m) => [Service] -> m C.ConfigParser
+serviceListToCP services = do
+        cps <- mapM serviceToCP services
+        return $ foldl C.merge C.emptyCP cps
+
 createService :: Service -> Uinitd Response
 createService service = do
         Config{..} <- ask
@@ -164,6 +169,21 @@ createService service = do
         result <- runExceptT $ do
             cp <- serviceToCP service
             writeCPtoFile filepath cp
+        case result of
+            (Left e) -> return $ Failure (show e)
+            _ -> return Success
+
+enableService :: Service -> Uinitd Response
+enableService Service{..} = do
+        Config{..} <- ask
+        UinitdState{..} <- get
+        result <- runExceptT $ do
+            cpServ <- C.add_section C.emptyCP sname
+            cpServ <- C.set cpServ sname "name" sname
+            cpServ <- C.set cpServ sname "exec" exec
+            cpList <- serviceListToCP enabled
+            let final = C.merge cpServ cpList
+            writeCPtoFile serviceList final
         case result of
             (Left e) -> return $ Failure (show e)
             _ -> return Success

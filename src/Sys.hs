@@ -20,7 +20,7 @@ startService Service{..} = do
         pid <- liftIO $ runCommand exec
         UinitdState{..} <- get
         let newRServ = RService {rname = sname, pid = pid}
-        put UinitdState {available = available, running = newRServ:running}
+        put UinitdState {available = available, running = newRServ:running, enabled = enabled}
         return newRServ
 
 startAllServices :: Uinitd ()
@@ -33,7 +33,7 @@ stopService service = do
         UinitdState{..} <- get
         liftIO $ terminateProcess $ pid service
         let removed = filter (\x -> x /= service) running
-        put UinitdState {available = available, running = removed}
+        put UinitdState {available = available, running = removed, enabled = enabled}
 
 loadParser :: (MonadError C.CPError ma, MonadIO mb) => FilePath -> mb (ma C.ConfigParser)
 loadParser filepath = do
@@ -75,8 +75,6 @@ writeCPtoFile :: MonadIO m => FilePath -> C.ConfigParser -> m (Either C.CPError 
 writeCPtoFile filepath cp = do
         let out = C.to_string cp
         result <- runExceptT $ do
-            check <- liftIO $ doesFileExist filepath
-            when check $ throwError (C.OtherProblem "File already exists.", "")
             write <- liftIO $ try $ writeFile filepath out
             case write of
                 (Left (SomeException e)) -> throwError (C.OtherProblem (show e), "writeCPtoFile")

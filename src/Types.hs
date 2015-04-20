@@ -68,11 +68,12 @@ instance Default Config where
 -- | Global program state
 data UinitdState = UinitdState {
                  available :: [Service],
-                 running   :: [RService]
+                 running   :: [RService],
+                 enabled   :: [Service]
 } deriving Show
 
 instance Default UinitdState where
-        def = UinitdState {available = [], running = []}
+        def = UinitdState {available = [], running = [], enabled = []}
 
 -- | Monad stack that carries configuration and state
 newtype Uinitd a = Uinitd (ReaderT Config (StateT UinitdState (JournalT Log IO)) a)
@@ -84,6 +85,7 @@ data Cmd = CmdStart SName
          | CmdRestart SName
          | CmdList
          | CmdCreate SName FilePath
+         | CmdEnable SName
          deriving (Generic, Show)
 
 instance Serialize Cmd

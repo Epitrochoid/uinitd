@@ -188,3 +188,12 @@ enableService Service{..} = do
             (Left e) -> return $ Failure (show e)
             _ -> return Success
 
+enableServiceByName :: SName -> Uinitd Response
+enableServiceByName service = do
+        UinitdState{..} <- get
+        let serv = findServiceByName service available
+        case serv of
+            Nothing -> return $ Failure "No such service named `" ++ service ++ "`."
+            (Just s) -> enableService s
+
+

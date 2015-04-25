@@ -152,7 +152,7 @@ listHandler Config{..} = do
             Nothing -> putStrLn "No response from server."
             (Just r) -> case r of
                             (Failure f) -> putStrLn f
-                            (ServList l) -> (mapM_ (putStrLn . show) l) >> (return ())
+                            (ServList s) -> putStrLn s
 
 runClientCmd :: Config -> Cmd -> IO ()
 runClientCmd Config{..} cmd = do

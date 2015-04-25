@@ -122,7 +122,10 @@ restartServiceByName service = do
 listServices :: Uinitd Response
 listServices = do
         UinitdState{..} <- get
-        return $ ServList available
+        return $ ServList $ (pretty "Running:" running) ++ (pretty "Enabled:" enabled) ++ (pretty "Available:" available)
+    where
+        pretty title servs = foldl (++) (title ++ "\n") (fmap (tabs . show) servs)
+        tabs s = "    " ++ s ++ "\n"
 
 -- | Finds a service by name, does not check that
 --   exec is the same. Presumes uniqueness of services

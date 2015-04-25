@@ -30,7 +30,7 @@ data Service = Service {
 } deriving (Eq, Generic)
 
 instance Show Service where
-        show Service{..} = sname ++ ": " ++ exec
+        show Service{..} = "[" ++ sname ++ "]" ++ ": " ++ exec
 
 instance Serialize Service
 
@@ -45,7 +45,7 @@ instance Eq RService where
         a /= b = not (a == b)
 
 instance Show RService where
-        show RService{..} = rname
+        show RService{..} = "[" ++ rname ++ "]"
 
 -- | Global program configuration
 data Config = Config {
@@ -94,7 +94,7 @@ instance Serialize Cmd
 -- | Daemon responses
 data Response = Failure String
               | Success
-              | ServList [Service]
+              | ServList String
               deriving (Generic, Show)
 
 instance Serialize Response

@@ -77,7 +77,7 @@ loadAllServices = do
             (Right cp) -> let full = loadServices cp (C.sections cp)
                               servs = rights full
                               errors = lefts full
-                          in (mapM (journal . fromList . show) errors) >> (put UinitdState{available=servs, running=running, enabled = servs})
+                          in (mapM (journal . fromList . show) errors) >> (put UinitdState{available=available, running=running, enabled = servs})
         writeOutLog
 
 loadServicesFromDir :: Uinitd ()
@@ -194,7 +194,7 @@ enableService serv@Service{..} = do
             writeCPtoFile serviceList final
         case result of
             (Left e) -> return $ Failure (show e)
-            _ -> (put UinitdState{running=running, available=available, enabled=serv:enabled}) >> (return Success)
+            _ -> loadAllServices >> (return Success)
 
 enableServiceByName :: SName -> Uinitd Response
 enableServiceByName service = do
@@ -214,5 +214,5 @@ disableServiceByName service = do
             writeCPtoFile serviceList cp
         case result of
             (Left e) -> return $ Failure (show e)
-            _ -> return Success
+            _ -> loadAllServices >> (return Success)
 

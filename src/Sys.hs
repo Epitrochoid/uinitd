@@ -26,7 +26,7 @@ startService Service{..} = do
 startAllServices :: Uinitd ()
 startAllServices = do
         UinitdState{..} <- get
-        mapM_ startService available
+        mapM_ startService enabled
 
 stopService :: RService -> Uinitd ()
 stopService service = do

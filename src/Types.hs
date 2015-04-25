@@ -50,7 +50,6 @@ instance Show RService where
 -- | Global program configuration
 data Config = Config {
             serviceDir  :: FilePath,
-            execDir     :: FilePath,
             serviceList :: FilePath,
             logFile     :: FilePath,
             pidDir      :: FilePath,
@@ -59,7 +58,6 @@ data Config = Config {
 
 instance Default Config where
         def = Config {serviceDir = "",
-                      execDir = "",
                       serviceList = "",
                       logFile = "",
                       pidDir = "",

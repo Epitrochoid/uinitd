@@ -43,13 +43,11 @@ addService service = do
 loadConfig :: MonadError C.CPError m => C.ConfigParser -> m Config
 loadConfig cp = do
         serviceDir <- C.get cp "" "services"
-        execDir <- C.get cp "" "executables"
         serviceList <- C.get cp "" "enabled"
         logFile <- C.get cp "" "logfile"
         pidDir <- C.get cp "" "pid_directory"
         port <- C.get cp "" "port"
         return $ Config {serviceDir = serviceDir,
-                         execDir = execDir,
                          serviceList = serviceList,
                          logFile = logFile,
                          pidDir = pidDir,

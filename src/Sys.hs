@@ -17,7 +17,7 @@ import Control.Monad.Reader
 
 startService :: Service -> Uinitd RService
 startService Service{..} = do
-        pid <- liftIO $ runCommand exec
+        (_, _, _, pid) <- liftIO $ createProcess (shell exec)
         UinitdState{..} <- get
         let newRServ = RService {rname = sname, pid = pid}
         put UinitdState {available = available, running = newRServ:running, enabled = enabled}

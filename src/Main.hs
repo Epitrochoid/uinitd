@@ -114,25 +114,25 @@ optionHandler Init{..} = do
         initHandler conf
 optionHandler Start{..} = do
         conf <- loadConfUnsafe config
-        startHandler conf sname
+        runClientCmd conf (CmdStart sname)
 optionHandler Stop{..} = do
         conf <- loadConfUnsafe config
-        stopHandler conf sname
+        runClientCmd conf (CmdStop sname)
 optionHandler Restart{..} = do
         conf <- loadConfUnsafe config
-        restartHandler conf sname
+        runClientCmd conf (CmdRestart sname)
 optionHandler List{..} = do
         conf <- loadConfUnsafe config
         listHandler conf
 optionHandler Create{..} = do
         conf <- loadConfUnsafe config
-        createHandler conf sname exec
+        runClientCmd conf (CmdCreate sname exec)
 optionHandler Enable{..} = do
         conf <- loadConfUnsafe config
-        enableHandler conf sname
+        runClientCmd conf (CmdEnable sname)
 optionHandler Disable{..} = do
         conf <- loadConfUnsafe config
-        disableHandler conf sname
+        runClientCmd conf (CmdDisable sname)
 
 initHandler :: Config -> IO ()
 initHandler conf = do
@@ -145,15 +145,6 @@ initHandler conf = do
         stateMVar <- newMVar s3
         ensureDaemonRunning "uinitd" opts (daemon conf stateMVar)
 
-startHandler :: Config -> SName -> IO ()
-startHandler conf service = runClientCmd conf (CmdStart service)
-
-stopHandler :: Config -> SName -> IO ()
-stopHandler conf service = runClientCmd conf (CmdStop service)
-
-restartHandler :: Config -> SName -> IO ()
-restartHandler conf service = runClientCmd conf (CmdRestart service)
-
 listHandler :: Config -> IO ()
 listHandler Config{..} = do
         resp <- runClient "localhost" port CmdList
@@ -162,14 +153,6 @@ listHandler Config{..} = do
             (Just r) -> case r of
                             (Failure f) -> putStrLn f
                             (ServList l) -> (mapM_ (putStrLn . show) l) >> (return ())
-
-createHandler :: Config -> SName -> FilePath -> IO ()
-createHandler conf service executable = runClientCmd conf (CmdCreate service executable)
-
-enableHandler :: Config -> SName -> IO ()
-enableHandler conf service = runClientCmd conf (CmdEnable service)
-
-disableHandler conf service = runClientCmd conf (CmdDisable service)
 
 runClientCmd :: Config -> Cmd -> IO ()
 runClientCmd Config{..} cmd = do

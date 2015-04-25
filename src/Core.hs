@@ -88,7 +88,7 @@ loadServicesFromDir = do
         let errors = lefts parsers
             cps = rights parsers
         mapM (journal . fromList . (++ "\n") . show) errors
-        let services = fmap (flip loadService $ "") cps
+        let services = fmap (flip loadService $ "DEFAULT") cps
         let errors2 = lefts services
             servs = rights services
         mapM (journal . fromList . show) errors2
@@ -154,8 +154,8 @@ serviceToCP sec Service{..} = do
         let cp = C.emptyCP
         let section = case sec of
                           True -> sname
-                          False -> ""
-        cp <- C.add_section cp section
+                          False -> "DEFAULT"
+        cp <- if sec then C.add_section cp section else return cp
         cp <- C.set cp section "name" sname
         cp <- C.set cp section "exec" exec
         return cp
@@ -168,13 +168,15 @@ serviceListToCP services = do
 createService :: Service -> Uinitd Response
 createService service = do
         Config{..} <- ask
+        UinitdState{..} <- get
         let filepath = serviceDir ++ (sname service) ++ ".service"
         result <- runExceptT $ do
             cp <- serviceToCP False service
             writeCPtoFile filepath cp
         case result of
             (Left e) -> return $ Failure (show e)
-            _ -> return Success
+            _ -> (put UinitdState{available=service:available, running=running, enabled=enabled}) >> (return Success)
+
 
 enableService :: Service -> Uinitd Response
 enableService serv@Service{..} = do

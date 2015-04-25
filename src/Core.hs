@@ -199,4 +199,15 @@ enableServiceByName service = do
             Nothing -> return $ Failure $ "No such service named `" ++ service ++ "`."
             (Just s) -> enableService s
 
+disableServiceByName :: SName -> Uinitd Response
+disableServiceByName service = do
+        UinitdState{..} <- get
+        Config{..} <- ask
+        result <- runExceptT $ do
+            cp <- serviceListToCP enabled
+            cp <- C.remove_section cp service
+            writeCPtoFile serviceList cp
+        case result of
+            (Left e) -> return $ Failure (show e)
+            _ -> return Success
 

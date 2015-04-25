@@ -86,6 +86,7 @@ data Cmd = CmdStart SName
          | CmdList
          | CmdCreate SName FilePath
          | CmdEnable SName
+         | CmdDisable SName
          deriving (Generic, Show)
 
 instance Serialize Cmd

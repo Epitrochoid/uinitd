@@ -35,6 +35,9 @@ data Options = Init { config :: S.FilePath
              | Enable { config :: S.FilePath
                       , sname :: SName
                       }
+             | Disable { config :: S.FilePath
+                       , sname :: SName
+                       }
                deriving (Show, Data, Typeable, Eq)
 
 init :: Options
@@ -78,9 +81,15 @@ enable = Enable { config = def &= help "uinitd configuration file"
                 }
                 &= details ["Enables a service to start on init."]
 
+disable :: Options
+disable = Disable { config = def &= help "uinitd configuration file"
+                  , sname = def &= help "name of service"
+                  }
+                  &= details ["Disables service from starting on init."]
+
 
 prgModes :: Mode (CmdArgs Options)
-prgModes = cmdArgsMode $ modes [init, start, stop, restart, list, create, enable]
+prgModes = cmdArgsMode $ modes [init, start, stop, restart, list, create, enable, disable]
     &= verbosityArgs [explicit, name "Verbose", name "V"] []
     &= versionArg [explicit, name "version", name "v", summary _PROGRAM_INFO]
     &= summary (_PROGRAM_INFO)
@@ -121,6 +130,9 @@ optionHandler Create{..} = do
 optionHandler Enable{..} = do
         conf <- loadConfUnsafe config
         enableHandler conf sname
+optionHandler Disable{..} = do
+        conf <- loadConfUnsafe config
+        disableHandler conf sname
 
 initHandler :: Config -> IO ()
 initHandler conf = do
@@ -157,6 +169,8 @@ createHandler conf service executable = runClientCmd conf (CmdCreate service exe
 enableHandler :: Config -> SName -> IO ()
 enableHandler conf service = runClientCmd conf (CmdEnable service)
 
+disableHandler conf service = runClientCmd conf (CmdDisable service)
+
 runClientCmd :: Config -> Cmd -> IO ()
 runClientCmd Config{..} cmd = do
         resp <- runClient "localhost" port cmd
@@ -176,6 +190,7 @@ daemon conf stateMVar cmd = do
                        CmdList -> listServices
                        (CmdCreate s e) -> createService Service{T.sname=s, T.exec=e}
                        (CmdEnable s) -> enableServiceByName s
+                       (CmdDisable s) -> disableServiceByName s
         (response, state) <- runUinitd conf st toDo
         putMVar stateMVar state
         return response

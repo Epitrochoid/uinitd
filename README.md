@@ -81,12 +81,34 @@ Available:
     [background]: feh --bg-scale background.png
 ```
 
-Likewise, it is stopped with the `stop` command.
+Likewise, it is stopped with the `stop` command, or restarted with the `restart` command.
 
 ```
 > uinitd stop -s background
+> uinitd list
 Running:
 Enabled:
 Available:
     [background]: feh --bg-scale background.png
 ```
+
+A service that is enabled will be run when `uinitd init` is called, this is the
+primary function of the program.
+
+```
+> uinitd enable -s background
+> uinitd list
+Running:
+Enabled:
+    [background]: feh --bg-scale background.png
+Available:
+    [background]: feh --bg-scale background.png
+```
+
+An enabled service can be disabled with the command `disable` in the same way.
+
+#### Caveats
+
+Service files and the service list are not meant to be user editable. They use a fairly
+simple syntax, but there are no garauntees that user edits will not be destroyed. All
+changes should be done using the built in commands.

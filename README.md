@@ -1,4 +1,4 @@
-# Uinitd
+# uinitctl
 
 ## Introduction
 
@@ -52,17 +52,17 @@ port: 5000
 
 The daemon is first started using the command `init`.
 
-`uinitd init` or `uinitd init -c myconfig.conf`
+`uinitctl init` or `uinitctl init -c myconfig.conf`
 
 To create a new service the command `create` is used and a name and path is given.
 
-`uinitd create -s background -e "feh --bg-scale background.png"`
+`uinitctl create -s background -e "feh --bg-scale background.png"`
 
 This creates a file background.service and places it in the services directory. We can
 now use the list command to see that it is an available service.
 
 ```
-> uinitd list
+> uinitctl list
 Running:
 Enabled:
 Available:
@@ -72,8 +72,8 @@ Available:
 If we want to start the service, use the `start` command with the name of the service.
 
 ```
-> uinitd start -s background
-> uinitd list
+> uinitctl start -s background
+> uinitctl list
 Running:
     [background]: feh --bg-scale background.png
 Enabled:
@@ -84,20 +84,20 @@ Available:
 Likewise, it is stopped with the `stop` command, or restarted with the `restart` command.
 
 ```
-> uinitd stop -s background
-> uinitd list
+> uinitctl stop -s background
+> uinitctl list
 Running:
 Enabled:
 Available:
     [background]: feh --bg-scale background.png
 ```
 
-A service that is enabled will be run when `uinitd init` is called, this is the
+A service that is enabled will be run when `uinitctl init` is called, this is the
 primary function of the program.
 
 ```
-> uinitd enable -s background
-> uinitd list
+> uinitctl enable -s background
+> uinitctl list
 Running:
 Enabled:
     [background]: feh --bg-scale background.png

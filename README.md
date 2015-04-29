@@ -9,7 +9,7 @@ window manager agnostic.
 ## Configuration
 
 Uinitd is configured by a single file. The file location can either be given
-on the command line using the -c flag, otherwise it first checks for
+on the command line using the `-c` flag, otherwise it first checks for
 `~/.config/uinitd.conf` and finally `/etc/uinitd.conf`.
 
 The configuration file requires 5 options to be set.

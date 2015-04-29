@@ -41,10 +41,10 @@ Port that the daemon listens on.
 
 ```
 # Example default configuration
-services: ~/.uinitd/services
-enabled: ~/.uinitd/services.list
-logfile: ~/.uinitd/uinitd.log
-pid_directory: ~/.uinitd
+services: /home/user/.uinitd/services/
+enabled: /home/user/.uinitd/services.list
+logfile: /home/user/.uinitd/uinitd.log
+pid_directory: /home/user/.uinitd/
 port: 5000
 ```
 

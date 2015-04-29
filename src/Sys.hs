@@ -5,7 +5,7 @@ module Sys where
 import Types
 import System.Process
 import System.IO
-import System.Directory (doesFileExist, getDirectoryContents)
+import System.Directory (doesFileExist, getDirectoryContents, getHomeDirectory)
 import qualified Data.ConfigFile as C
 import Data.DList
 import Control.Exception
@@ -52,12 +52,12 @@ loadParserList directory = do
 confOrDefault :: MonadIO m => FilePath -> m (Maybe FilePath)
 confOrDefault given = do
         let a = not $ null given
-        b <- liftIO $ doesFileExist userLoc
+        home <- liftIO $ getHomeDirectory
+        b <- liftIO $ doesFileExist $ userLoc home
         c <- liftIO $ doesFileExist sysLoc
-        home <- getHomeDirectory
         return $ case (a, b, c) of
                       (False, False, True) -> Just sysLoc
-                      (False, True, _) -> Just userLoc
+                      (False, True, _) -> Just $ userLoc home
                       (True, _, _) -> Just given
                       _ -> Nothing
     where

@@ -54,13 +54,14 @@ confOrDefault given = do
         let a = not $ null given
         b <- liftIO $ doesFileExist userLoc
         c <- liftIO $ doesFileExist sysLoc
+        home <- getHomeDirectory
         return $ case (a, b, c) of
                       (False, False, True) -> Just sysLoc
                       (False, True, _) -> Just userLoc
                       (True, _, _) -> Just given
                       _ -> Nothing
     where
-        userLoc = "~/.config/uinitd.conf" :: FilePath
+        userLoc h = h ++ "/.config/uinitd.conf" :: FilePath
         sysLoc = "/etc/uinitd.conf" :: FilePath
 
 writeOutLog :: Uinitd ()
